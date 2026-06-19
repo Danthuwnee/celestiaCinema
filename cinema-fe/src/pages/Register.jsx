@@ -3,7 +3,6 @@ import { Link, useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { User, Mail, Phone, Lock, UserPlus } from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext'
-import StarsBackground from '../components/ui/StarsBackground'
 import Input from '../components/ui/Input'
 import Button from '../components/ui/Button'
 
@@ -72,7 +71,6 @@ export default function Register() {
 
   return (
     <div className="min-h-screen flex items-center justify-center px-4 py-20 relative">
-      <StarsBackground />
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}

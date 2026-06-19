@@ -35,6 +35,8 @@ export default function Layout() {
     return location.pathname.startsWith(path)
   }
 
+  const isAuthPage = ['/login', '/register', '/forgot-password'].includes(location.pathname)
+
   return (
     <div className="min-h-screen text-white">
       <StarsBackground />
@@ -62,21 +64,23 @@ export default function Layout() {
           </Link>
 
           {/* Desktop Nav */}
-          <nav className="hidden md:flex items-center gap-1">
-            {navLinks.map((link) => (
-              <Link
-                key={link.path}
-                to={link.path}
-                className={`px-4 py-2 rounded-xl text-sm font-medium transition-all duration-300 ${
-                  location.pathname === link.path || location.search === link.path.split('?')[1]
-                    ? 'text-white bg-white/10'
-                    : 'text-text-secondary hover:text-white hover:bg-white/5'
-                }`}
-              >
-                {link.label}
-              </Link>
-            ))}
-          </nav>
+          {!isAuthPage && (
+            <nav className="hidden md:flex items-center gap-1">
+              {navLinks.map((link) => (
+                <Link
+                  key={link.path}
+                  to={link.path}
+                  className={`px-4 py-2 rounded-xl text-sm font-medium transition-all duration-300 ${
+                    location.pathname === link.path || location.search === link.path.split('?')[1]
+                      ? 'text-white bg-white/10'
+                      : 'text-text-secondary hover:text-white hover:bg-white/5'
+                  }`}
+                >
+                  {link.label}
+                </Link>
+              ))}
+            </nav>
+          )}
 
           {/* Right Side */}
           <div className="flex items-center gap-2">
@@ -141,10 +145,16 @@ export default function Layout() {
               </div>
             ) : (
               <div className="flex items-center gap-2">
-                <Link to="/login" className="px-4 py-2 text-sm font-medium text-text-secondary hover:text-white transition-colors">
+                <Link
+                  to="/login"
+                  className={location.pathname === '/login' ? 'btn-primary text-sm py-2 px-4' : 'px-4 py-2 text-sm font-medium text-text-secondary hover:text-white transition-colors'}
+                >
                   Đăng nhập
                 </Link>
-                <Link to="/register" className="btn-primary text-sm py-2 px-4">
+                <Link
+                  to="/register"
+                  className={location.pathname === '/register' ? 'btn-primary text-sm py-2 px-4' : 'px-4 py-2 text-sm font-medium text-text-secondary hover:text-white transition-colors'}
+                >
                   Đăng ký
                 </Link>
               </div>
@@ -162,29 +172,31 @@ export default function Layout() {
       </header>
 
       {/* Mobile menu */}
-      <AnimatePresence>
-        {menuOpen && (
-          <motion.div
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
-            className="fixed top-16 left-0 right-0 z-30 bg-space-dark/95 backdrop-blur-xl border-b border-white/10 md:hidden"
-          >
-            <nav className="p-4 space-y-1">
-              {navLinks.map((link) => (
-                <Link
-                  key={link.path}
-                  to={link.path}
-                  onClick={() => setMenuOpen(false)}
-                  className="block px-4 py-3 rounded-xl text-sm font-medium text-text-secondary hover:text-white hover:bg-white/5 transition-all"
-                >
-                  {link.label}
-                </Link>
-              ))}
-            </nav>
-          </motion.div>
-        )}
-      </AnimatePresence>
+      {!isAuthPage && (
+        <AnimatePresence>
+          {menuOpen && (
+            <motion.div
+              initial={{ opacity: 0, y: -20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              className="fixed top-16 left-0 right-0 z-30 bg-space-dark/95 backdrop-blur-xl border-b border-white/10 md:hidden"
+            >
+              <nav className="p-4 space-y-1">
+                {navLinks.map((link) => (
+                  <Link
+                    key={link.path}
+                    to={link.path}
+                    onClick={() => setMenuOpen(false)}
+                    className="block px-4 py-3 rounded-xl text-sm font-medium text-text-secondary hover:text-white hover:bg-white/5 transition-all"
+                  >
+                    {link.label}
+                  </Link>
+                ))}
+              </nav>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      )}
 
       {/* Main content */}
       <main className="pt-16 min-h-screen">
@@ -192,47 +204,49 @@ export default function Layout() {
       </main>
 
       {/* Footer */}
-      <footer className="border-t border-white/10 bg-space-deeper/50 backdrop-blur-xl">
-        <div className="max-w-7xl mx-auto px-4 py-8">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-            <div className="col-span-2 md:col-span-1 space-y-2">
-              <div className="flex items-center gap-2">
-                <div className="w-6 h-6 rounded-full bg-button-glow flex items-center justify-center">
-                  <Star size={12} className="text-white" fill="white" />
+      {!isAuthPage && (
+        <footer className="border-t border-white/10 bg-space-deeper/50 backdrop-blur-xl">
+          <div className="max-w-7xl mx-auto px-4 py-8">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+              <div className="col-span-2 md:col-span-1 space-y-2">
+                <div className="flex items-center gap-2">
+                  <div className="w-6 h-6 rounded-full bg-button-glow flex items-center justify-center">
+                    <Star size={12} className="text-white" fill="white" />
+                  </div>
+                  <span className="font-display font-bold galaxy-text-gradient text-sm">CELESTIA</span>
                 </div>
-                <span className="font-display font-bold galaxy-text-gradient text-sm">CELESTIA</span>
+                <p className="text-text-muted text-xs">Your Gateway to Cinematic Experiences</p>
               </div>
-              <p className="text-text-muted text-xs">Your Gateway to Cinematic Experiences</p>
+              <div>
+                <h4 className="font-semibold text-xs mb-2">Danh mục</h4>
+                <ul className="space-y-1">
+                  <li><Link to="/" className="text-text-muted text-xs hover:text-galaxy-cyan transition-colors">Phim đang chiếu</Link></li>
+                  <li><Link to="/?tab=coming-soon" className="text-text-muted text-xs hover:text-galaxy-cyan transition-colors">Phim sắp chiếu</Link></li>
+                </ul>
+              </div>
+              <div>
+                <h4 className="font-semibold text-xs mb-2">Hỗ trợ</h4>
+                <ul className="space-y-1">
+                  <li><span className="text-text-muted text-xs">Trung tâm trợ giúp</span></li>
+                  <li><span className="text-text-muted text-xs">Điều khoản sử dụng</span></li>
+                  <li><span className="text-text-muted text-xs">Chính sách bảo mật</span></li>
+                </ul>
+              </div>
+              <div>
+                <h4 className="font-semibold text-xs mb-2">Kết nối</h4>
+                <ul className="space-y-1">
+                  <li className="text-text-muted text-xs">Facebook</li>
+                  <li className="text-text-muted text-xs">Instagram</li>
+                  <li className="text-text-muted text-xs">TikTok</li>
+                </ul>
+              </div>
             </div>
-            <div>
-              <h4 className="font-semibold text-xs mb-2">Danh mục</h4>
-              <ul className="space-y-1">
-                <li><Link to="/" className="text-text-muted text-xs hover:text-galaxy-cyan transition-colors">Phim đang chiếu</Link></li>
-                <li><Link to="/?tab=coming-soon" className="text-text-muted text-xs hover:text-galaxy-cyan transition-colors">Phim sắp chiếu</Link></li>
-              </ul>
-            </div>
-            <div>
-              <h4 className="font-semibold text-xs mb-2">Hỗ trợ</h4>
-              <ul className="space-y-1">
-                <li><span className="text-text-muted text-xs">Trung tâm trợ giúp</span></li>
-                <li><span className="text-text-muted text-xs">Điều khoản sử dụng</span></li>
-                <li><span className="text-text-muted text-xs">Chính sách bảo mật</span></li>
-              </ul>
-            </div>
-            <div>
-              <h4 className="font-semibold text-xs mb-2">Kết nối</h4>
-              <ul className="space-y-1">
-                <li className="text-text-muted text-xs">Facebook</li>
-                <li className="text-text-muted text-xs">Instagram</li>
-                <li className="text-text-muted text-xs">TikTok</li>
-              </ul>
+            <div className="mt-6 pt-4 border-t border-white/5 text-center text-text-muted text-[10px]">
+              &copy; 2026 CELESTIA CINEMA. All rights reserved.
             </div>
           </div>
-          <div className="mt-6 pt-4 border-t border-white/5 text-center text-text-muted text-[10px]">
-            &copy; 2026 CELESTIA CINEMA. All rights reserved.
-          </div>
-        </div>
-      </footer>
+        </footer>
+      )}
     </div>
   )
 }

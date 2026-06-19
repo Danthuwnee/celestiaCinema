@@ -3,7 +3,6 @@ import { Link } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Mail, Key, CheckCircle } from 'lucide-react'
 import authApi from '../api/authApi'
-import StarsBackground from '../components/ui/StarsBackground'
 import Input from '../components/ui/Input'
 import Button from '../components/ui/Button'
 
@@ -73,7 +72,6 @@ export default function ForgotPassword() {
 
   return (
     <div className="min-h-screen flex items-center justify-center px-4 py-20 relative">
-      <StarsBackground />
       <div className="w-full max-w-md">
         <div className="glass-card p-8">
           <AnimatePresence mode="wait">

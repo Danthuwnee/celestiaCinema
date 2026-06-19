@@ -73,7 +73,7 @@ export default function SeatSelection() {
   const total = selectedSeats.reduce((sum, s) => sum + s.calculatedPrice, 0)
 
   return (
-    <div className="max-w-5xl mx-auto px-4 py-8">
+    <div className="max-w-7xl mx-auto px-4 py-8">
       <button onClick={() => navigate(-1)} className="text-text-muted hover:text-white transition-colors mb-6 flex items-center gap-1">
         <ChevronRight size={16} className="rotate-180" /> Quay lại
       </button>
