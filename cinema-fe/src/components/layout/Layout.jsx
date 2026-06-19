@@ -193,42 +193,42 @@ export default function Layout() {
 
       {/* Footer */}
       <footer className="border-t border-white/10 bg-space-deeper/50 backdrop-blur-xl">
-        <div className="max-w-7xl mx-auto px-4 py-12">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
-            <div className="space-y-3">
+        <div className="max-w-7xl mx-auto px-4 py-8">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+            <div className="col-span-2 md:col-span-1 space-y-2">
               <div className="flex items-center gap-2">
-                <div className="w-7 h-7 rounded-full bg-button-glow flex items-center justify-center">
-                  <Star size={14} className="text-white" fill="white" />
+                <div className="w-6 h-6 rounded-full bg-button-glow flex items-center justify-center">
+                  <Star size={12} className="text-white" fill="white" />
                 </div>
-                <span className="font-display font-bold galaxy-text-gradient">CELESTIA</span>
+                <span className="font-display font-bold galaxy-text-gradient text-sm">CELESTIA</span>
               </div>
-              <p className="text-text-muted text-sm">Your Gateway to Cinematic Experiences</p>
+              <p className="text-text-muted text-xs">Your Gateway to Cinematic Experiences</p>
             </div>
             <div>
-              <h4 className="font-semibold text-sm mb-3">Danh mục</h4>
-              <ul className="space-y-2">
-                <li><Link to="/" className="text-text-muted text-sm hover:text-galaxy-cyan transition-colors">Phim đang chiếu</Link></li>
-                <li><Link to="/?tab=coming-soon" className="text-text-muted text-sm hover:text-galaxy-cyan transition-colors">Phim sắp chiếu</Link></li>
+              <h4 className="font-semibold text-xs mb-2">Danh mục</h4>
+              <ul className="space-y-1">
+                <li><Link to="/" className="text-text-muted text-xs hover:text-galaxy-cyan transition-colors">Phim đang chiếu</Link></li>
+                <li><Link to="/?tab=coming-soon" className="text-text-muted text-xs hover:text-galaxy-cyan transition-colors">Phim sắp chiếu</Link></li>
               </ul>
             </div>
             <div>
-              <h4 className="font-semibold text-sm mb-3">Hỗ trợ</h4>
-              <ul className="space-y-2">
-                <li><span className="text-text-muted text-sm">Trung tâm trợ giúp</span></li>
-                <li><span className="text-text-muted text-sm">Điều khoản sử dụng</span></li>
-                <li><span className="text-text-muted text-sm">Chính sách bảo mật</span></li>
+              <h4 className="font-semibold text-xs mb-2">Hỗ trợ</h4>
+              <ul className="space-y-1">
+                <li><span className="text-text-muted text-xs">Trung tâm trợ giúp</span></li>
+                <li><span className="text-text-muted text-xs">Điều khoản sử dụng</span></li>
+                <li><span className="text-text-muted text-xs">Chính sách bảo mật</span></li>
               </ul>
             </div>
             <div>
-              <h4 className="font-semibold text-sm mb-3">Kết nối</h4>
-              <ul className="space-y-2">
-                <li className="text-text-muted text-sm">Facebook</li>
-                <li className="text-text-muted text-sm">Instagram</li>
-                <li className="text-text-muted text-sm">TikTok</li>
+              <h4 className="font-semibold text-xs mb-2">Kết nối</h4>
+              <ul className="space-y-1">
+                <li className="text-text-muted text-xs">Facebook</li>
+                <li className="text-text-muted text-xs">Instagram</li>
+                <li className="text-text-muted text-xs">TikTok</li>
               </ul>
             </div>
           </div>
-          <div className="mt-8 pt-6 border-t border-white/5 text-center text-text-muted text-xs">
+          <div className="mt-6 pt-4 border-t border-white/5 text-center text-text-muted text-[10px]">
             &copy; 2026 CELESTIA CINEMA. All rights reserved.
           </div>
         </div>

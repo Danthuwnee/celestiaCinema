@@ -45,19 +45,19 @@ export default function MovieDetail() {
     : movie.trailerUrl
 
   return (
-    <div className="max-w-7xl mx-auto px-4 py-8">
-      <button onClick={() => window.history.back()} className="text-text-muted hover:text-white transition-colors mb-6 flex items-center gap-1">
-        <ChevronRight size={16} className="rotate-180" /> Quay lại
+    <div className="max-w-7xl mx-auto px-4 py-6">
+      <button onClick={() => window.history.back()} className="text-text-muted hover:text-white transition-colors mb-4 flex items-center gap-1 text-sm">
+        <ChevronRight size={14} className="rotate-180" /> Quay lại
       </button>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-12">
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-10">
         <motion.div
           initial={{ opacity: 0, x: -20 }}
           animate={{ opacity: 1, x: 0 }}
           className="md:col-span-1"
         >
           <div className="glass-card overflow-hidden">
-            <div className="aspect-[2/3] flex items-center justify-center">
+            <div className="aspect-[3/4] flex items-center justify-center">
               {movie.posterUrl ? (
                 <img src={movie.posterUrl} alt={movie.title} className="w-full h-full object-cover" />
               ) : (
@@ -70,7 +70,7 @@ export default function MovieDetail() {
         <motion.div
           initial={{ opacity: 0, x: 20 }}
           animate={{ opacity: 1, x: 0 }}
-          className="md:col-span-2 space-y-4"
+          className="md:col-span-3 space-y-3"
         >
           <div className="flex items-center gap-2 flex-wrap">
             <Badge variant={movie.ageRating}>{movie.ageRating}</Badge>
@@ -79,18 +79,18 @@ export default function MovieDetail() {
             ))}
           </div>
 
-          <h1 className="text-3xl md:text-4xl font-bold">{movie.title}</h1>
+          <h1 className="text-2xl md:text-3xl font-bold">{movie.title}</h1>
 
-          <div className="flex flex-wrap items-center gap-4 text-sm text-text-secondary">
+          <div className="flex flex-wrap items-center gap-3 text-sm text-text-secondary">
             <span className="flex items-center gap-1"><Clock size={14} /> {movie.duration} phút</span>
             <span className="flex items-center gap-1"><Globe size={14} /> {movie.language}</span>
             <span className="flex items-center gap-1"><Calendar size={14} /> Khởi chiếu: {new Date(movie.showingStartDate).toLocaleDateString('vi-VN')}</span>
           </div>
 
-          <p className="text-text-secondary leading-relaxed">{movie.description}</p>
+          <p className="text-text-secondary text-sm leading-relaxed">{movie.description}</p>
 
           {movie.trailerUrl && (
-            <div className="aspect-video rounded-2xl overflow-hidden glass-card">
+            <div className="aspect-video rounded-xl overflow-hidden glass-card">
               <iframe
                 src={trailerEmbed}
                 title="Trailer"
@@ -105,34 +105,34 @@ export default function MovieDetail() {
 
       {/* Showtimes */}
       <div>
-        <h2 className="text-2xl font-bold mb-6 flex items-center gap-2">
-          <Play size={20} className="text-galaxy-cyan" /> Suất chiếu
+        <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
+          <Play size={18} className="text-galaxy-cyan" /> Suất chiếu
         </h2>
 
         {Object.keys(groupedShowtimes).length === 0 ? (
-          <div className="glass-card p-8 text-center text-text-muted">Chưa có suất chiếu</div>
+          <div className="glass-card p-6 text-center text-text-muted">Chưa có suất chiếu</div>
         ) : (
-          <div className="space-y-6">
+          <div className="space-y-4">
             {Object.entries(groupedShowtimes).map(([date, sts]) => (
               <div key={date}>
-                <p className="text-sm font-medium text-text-secondary mb-3">
+                <p className="text-xs font-medium text-text-secondary mb-2">
                   {new Date(date).toLocaleDateString('vi-VN', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
                 </p>
-                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
+                <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-7 gap-2">
                   {sts.map(st => (
                     <Link
                       key={st.showtimeId}
                       to={`/booking/${st.showtimeId}`}
-                      className="glass-card p-4 text-center hover:border-galaxy-purple/50 transition-all group"
+                      className="glass-card p-3 text-center hover:border-galaxy-purple/50 transition-all group"
                     >
-                      <p className="text-lg font-bold text-galaxy-cyan group-hover:text-galaxy-pink transition-colors">
+                      <p className="text-base font-bold text-galaxy-cyan group-hover:text-galaxy-pink transition-colors">
                         {new Date(st.startTime).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}
                       </p>
-                      <p className="text-xs text-text-muted mt-1">
+                      <p className="text-[10px] text-text-muted mt-0.5">
                         {new Date(st.endTime).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}
                       </p>
-                      <p className="text-sm font-semibold text-white mt-2">{st.basePrice?.toLocaleString()}₫</p>
-                      {st.roomName && <p className="text-xs text-text-muted mt-1">{st.roomName}</p>}
+                      <p className="text-xs font-semibold text-white mt-1">{st.basePrice?.toLocaleString()}₫</p>
+                      {st.roomName && <p className="text-[10px] text-text-muted mt-0.5">{st.roomName}</p>}
                     </Link>
                   ))}
                 </div>

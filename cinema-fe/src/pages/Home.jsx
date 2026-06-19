@@ -48,7 +48,7 @@ export default function Home() {
     <div>
       {/* Hero Section */}
       {heroMovie && activeTab === 'now-showing' && (
-        <section className="relative h-[70vh] min-h-[500px] overflow-hidden">
+        <section className="relative h-[55vh] min-h-[380px] overflow-hidden">
           <div className="absolute inset-0 bg-gradient-to-b from-space-dark/40 via-space-dark/70 to-space-dark" />
           <div className="absolute inset-0 bg-galaxy-hero" />
           <div
@@ -61,24 +61,24 @@ export default function Home() {
               animate={{ opacity: 1, y: 0 }}
               className="max-w-xl"
             >
-              <div className="flex items-center gap-2 mb-3">
+              <div className="flex items-center gap-2 mb-2">
                 <Badge variant={heroMovie.ageRating}>{heroMovie.ageRating}</Badge>
                 <span className="text-text-muted text-sm flex items-center gap-1">
                   <Clock size={14} /> {heroMovie.duration} phút
                 </span>
               </div>
-              <h1 className="text-4xl md:text-6xl font-bold mb-4">{heroMovie.title}</h1>
-              <p className="text-text-secondary text-lg mb-6 line-clamp-3">{heroMovie.description}</p>
+              <h1 className="text-3xl md:text-5xl font-bold mb-3">{heroMovie.title}</h1>
+              <p className="text-text-secondary text-base mb-4 line-clamp-2">{heroMovie.description}</p>
               <div className="flex items-center gap-3">
                 <Link
                   to={`/movies/${heroMovie.movieId || heroMovie.id}`}
-                  className="btn-primary flex items-center gap-2 text-lg py-3 px-8"
+                  className="btn-primary flex items-center gap-2 py-2.5 px-6"
                 >
-                  <Play size={20} /> Đặt Vé Ngay
+                  <Play size={18} /> Đặt Vé Ngay
                 </Link>
                 <Link
                   to={`/movies/${heroMovie.movieId || heroMovie.id}`}
-                  className="btn-secondary flex items-center gap-2 text-lg py-3 px-8"
+                  className="btn-secondary flex items-center gap-2 py-2.5 px-6"
                 >
                   Xem Trailer
                 </Link>
@@ -157,7 +157,7 @@ export default function Home() {
         ) : (
           <motion.div
             layout
-            className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 mb-12"
+            className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 mb-8"
           >
             <AnimatePresence mode="popLayout">
               {filtered.map((movie, i) => (
@@ -171,15 +171,15 @@ export default function Home() {
                   className="group relative glass-card-hover overflow-hidden"
                 >
                   <Link to={`/movies/${movie.movieId || movie.id}`}>
-                    <div className="relative aspect-[2/3] overflow-hidden">
+                    <div className="relative aspect-[3/4] overflow-hidden">
                       <img
                         src={movie.posterUrl || '/placeholder.jpg'}
                         alt={movie.title}
                         className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
                         onError={(e) => { e.target.src = ''; e.target.parentElement.innerHTML = `<div class="w-full h-full flex items-center justify-center text-4xl font-bold galaxy-text-gradient">${(movie.title || '?')[0]}</div>` }}
                       />
-                      <div className="absolute inset-0 bg-gradient-to-t from-space-dark/90 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end justify-center p-4 gap-2">
-                        <span className="btn-primary text-sm py-1.5 px-4 flex items-center gap-1">
+                      <div className="absolute inset-0 bg-gradient-to-t from-space-dark/90 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end justify-center p-3 gap-2">
+                        <span className="btn-primary text-xs py-1 px-3 flex items-center gap-1">
                           Đặt Vé
                         </span>
                       </div>
@@ -187,24 +187,24 @@ export default function Home() {
                         <Badge variant={movie.ageRating}>{movie.ageRating}</Badge>
                       </div>
                       {movie.rating && (
-                        <div className="absolute top-2 right-2 bg-space-dark/80 backdrop-blur-sm rounded-lg px-2 py-1 flex items-center gap-1">
-                          <Star size={12} fill="#FF4FD8" color="#FF4FD8" />
-                          <span className="text-xs font-semibold">{movie.rating}</span>
+                        <div className="absolute top-1.5 right-1.5 bg-space-dark/80 backdrop-blur-sm rounded-md px-1.5 py-0.5 flex items-center gap-0.5">
+                          <Star size={10} fill="#FF4FD8" color="#FF4FD8" />
+                          <span className="text-[10px] font-semibold">{movie.rating}</span>
                         </div>
                       )}
                     </div>
-                    <div className="p-4">
-                      <h3 className="font-semibold text-sm mb-1 line-clamp-1 group-hover:text-galaxy-cyan transition-colors">
+                    <div className="p-3">
+                      <h3 className="font-medium text-xs leading-tight line-clamp-1 group-hover:text-galaxy-cyan transition-colors">
                         {movie.title}
                       </h3>
-                      <div className="flex items-center gap-2 text-xs text-text-muted">
-                        <Clock size={12} />
+                      <div className="flex items-center gap-1 mt-1 text-[10px] text-text-muted">
+                        <Clock size={10} />
                         <span>{movie.duration} phút</span>
                       </div>
                       {movie.genres && (
-                        <div className="flex flex-wrap gap-1 mt-2">
+                        <div className="flex flex-wrap gap-0.5 mt-1.5">
                           {movie.genres.slice(0, 2).map(g => (
-                            <span key={g.genreId || g} className="text-xs px-2 py-0.5 rounded-full bg-white/5 text-text-muted">
+                            <span key={g.genreId || g} className="text-[9px] px-1.5 py-0.5 rounded-full bg-white/5 text-text-muted">
                               {g.name || g}
                             </span>
                           ))}

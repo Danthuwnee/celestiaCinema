@@ -55,12 +55,12 @@ public class AuthController {
     @PostMapping("/forgot-password")
     public ResponseEntity<Map<String, String>> forgotPassword(@Valid @RequestBody ForgotPasswordRequest request) {
         authService.forgotPassword(request);
-        return ResponseEntity.ok(Map.of("message", "Ma xac nhan da gui den email cua ban"));
+        return ResponseEntity.ok(Map.of("message", "Mã xác nhận đã gửi đến email của bạn"));
     }
 
     @PostMapping("/reset-password")
     public ResponseEntity<Map<String, String>> resetPassword(@Valid @RequestBody ResetPasswordRequest request) {
         authService.resetPassword(request);
-        return ResponseEntity.ok(Map.of("message", "Dat lai mat khau thanh cong"));
+        return ResponseEntity.ok(Map.of("message", "Đặt lại mật khẩu thành công"));
     }
 }

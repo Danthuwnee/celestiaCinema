@@ -16,14 +16,30 @@ export default function Register() {
   const { register } = useAuth()
   const navigate = useNavigate()
 
+  const validatePassword = (pw) => {
+    if (!pw) return 'Vui lòng nhập mật khẩu'
+    if (pw.length < 6) return 'Mật khẩu tối thiểu 6 ký tự'
+    if (!/[A-Z]/.test(pw)) return 'Mật khẩu phải có chữ hoa'
+    if (!/[a-z]/.test(pw)) return 'Mật khẩu phải có chữ thường'
+    if (!/\d/.test(pw)) return 'Mật khẩu phải có số'
+    if (!/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(pw)) return 'Mật khẩu phải có ký tự đặc biệt'
+    return null
+  }
+
   const validate = () => {
     const errs = {}
     if (!form.fullName.trim()) errs.fullName = 'Vui lòng nhập họ tên'
+    else if (form.fullName.trim().length < 2) errs.fullName = 'Họ tên tối thiểu 2 ký tự'
+
     if (!form.email.trim()) errs.email = 'Vui lòng nhập email'
     else if (!/\S+@\S+\.\S+/.test(form.email)) errs.email = 'Email không hợp lệ'
-    if (form.phone && !/^0\d{9,10}$/.test(form.phone)) errs.phone = 'Số điện thoại không hợp lệ (10-11 số)'
-    if (!form.password) errs.password = 'Vui lòng nhập mật khẩu'
-    else if (form.password.length < 6) errs.password = 'Mật khẩu tối thiểu 6 ký tự'
+
+    if (!form.phone.trim()) errs.phone = 'Vui lòng nhập số điện thoại'
+    else if (!/^0\d{9}$/.test(form.phone)) errs.phone = 'Số điện thoại phải có 10 số'
+
+    const passwordErr = validatePassword(form.password)
+    if (passwordErr) errs.password = passwordErr
+
     if (form.password !== form.confirmPassword) errs.confirmPassword = 'Mật khẩu không khớp'
     return errs
   }
@@ -40,7 +56,7 @@ export default function Register() {
       await register({
         fullName: form.fullName,
         email: form.email,
-        phone: form.phone || undefined,
+        phone: form.phone,
         password: form.password,
       })
       setSuccess(true)
@@ -80,12 +96,12 @@ export default function Register() {
             </div>
           )}
 
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <Input label="Họ tên" type="text" placeholder="Nguyễn Văn A" value={form.fullName} onChange={(e) => update('fullName', e.target.value)} icon={User} error={errors.fullName} required />
-            <Input label="Email" type="email" placeholder="your@email.com" value={form.email} onChange={(e) => update('email', e.target.value)} icon={Mail} error={errors.email} required />
+          <form onSubmit={handleSubmit} noValidate className="space-y-4">
+            <Input label="Họ tên" type="text" placeholder="Nguyễn Văn A" value={form.fullName} onChange={(e) => update('fullName', e.target.value)} icon={User} error={errors.fullName} />
+            <Input label="Email" type="email" placeholder="your@email.com" value={form.email} onChange={(e) => update('email', e.target.value)} icon={Mail} error={errors.email} />
             <Input label="Số điện thoại" type="tel" placeholder="0901234567" value={form.phone} onChange={(e) => update('phone', e.target.value)} icon={Phone} error={errors.phone} />
-            <Input label="Mật khẩu" type="password" placeholder="••••••••" value={form.password} onChange={(e) => update('password', e.target.value)} icon={Lock} error={errors.password} required />
-            <Input label="Xác nhận mật khẩu" type="password" placeholder="••••••••" value={form.confirmPassword} onChange={(e) => update('confirmPassword', e.target.value)} error={errors.confirmPassword} required />
+            <Input label="Mật khẩu" type="password" placeholder="••••••••" value={form.password} onChange={(e) => update('password', e.target.value)} icon={Lock} error={errors.password} />
+            <Input label="Xác nhận mật khẩu" type="password" placeholder="••••••••" value={form.confirmPassword} onChange={(e) => update('confirmPassword', e.target.value)} error={errors.confirmPassword} />
 
             <Button type="submit" disabled={loading || success} className="w-full flex items-center justify-center gap-2 text-lg py-3">
               <UserPlus size={20} />

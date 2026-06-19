@@ -22,6 +22,9 @@ dist/
 *.swo
 *~
 
+# --- H2 database files ---
+data/
+
 # --- OS ---
 .DS_Store
 Thumbs.db

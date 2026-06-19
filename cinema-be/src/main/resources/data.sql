@@ -5,19 +5,22 @@
 INSERT INTO users (user_id, full_name, email, password_hash, role, status)
 VALUES ('00000000-0000-0000-0000-000000000001', 'System Admin', 'admin@cinema.com',
         '$2a$10$tH6TXA7PEH3j1EyFFvrHOOCGyTpSZaJR0VHsBCRYFv4DIoQom0EJC',
-        'ADMIN', 'ACTIVE');
+        'ADMIN', 'ACTIVE')
+ON CONFLICT DO NOTHING;
 
 -- Customer account (password: customer123)
 INSERT INTO users (user_id, full_name, email, password_hash, role, status, phone)
 VALUES ('00000000-0000-0000-0000-000000000002', 'Nguyen Van A', 'customer@test.com',
         '$2a$10$tH6TXA7PEH3j1EyFFvrHOO/AR6rRrejclZPP6rD8.wtg6Kd1uLwJS',
-        'CUSTOMER', 'ACTIVE', '0901234567');
+        'CUSTOMER', 'ACTIVE', '0901234567')
+ON CONFLICT DO NOTHING;
 
 -- Seat types
 INSERT INTO seat_types (seat_type_id, type_name, price_multiplier, color_hex) VALUES
     ('a0000001-0000-0000-0000-000000000001', 'Standard', 1.00, '#4CAF50'),
     ('a0000001-0000-0000-0000-000000000002', 'VIP', 1.50, '#FF9800'),
-    ('a0000001-0000-0000-0000-000000000003', 'Couple', 2.00, '#E91E63');
+    ('a0000001-0000-0000-0000-000000000003', 'Couple', 2.00, '#E91E63')
+ON CONFLICT DO NOTHING;
 
 -- Genres
 INSERT INTO genres (genre_id, name, slug) VALUES
@@ -26,25 +29,29 @@ INSERT INTO genres (genre_id, name, slug) VALUES
     ('b0000001-0000-0000-0000-000000000003', 'Tinh cam', 'tinh-cam'),
     ('b0000001-0000-0000-0000-000000000004', 'Kinh di', 'kinh-di'),
     ('b0000001-0000-0000-0000-000000000005', 'Khoa hoc vien tuong', 'khoa-hoc-vien-tuong'),
-    ('b0000001-0000-0000-0000-000000000006', 'Hoat hinh', 'hoat-hinh');
+    ('b0000001-0000-0000-0000-000000000006', 'Hoat hinh', 'hoat-hinh')
+ON CONFLICT DO NOTHING;
 
 -- Movies
 INSERT INTO movies (movie_id, title, description, duration, language, age_rating, trailer_url, poster_url, showing_start_date, showing_end_date, status) VALUES
     ('c0000001-0000-0000-0000-000000000001', 'Avengers: Endgame', 'Biet doi sieu anh hung tap hop lan cuoi', 181, 'Tieng Anh', 'T13', 'https://www.youtube.com/watch?v=TcMBFSGVi1c', 'https://picsum.photos/seed/movie1/300/450', '2026-06-01', '2026-07-15', 'ACTIVE'),
     ('c0000001-0000-0000-0000-000000000002', 'Doraemon', 'Chuyen phieu luu am nhac cua Nobita', 115, 'Tieng Viet', 'P', NULL, NULL, '2026-06-05', '2026-07-20', 'ACTIVE'),
-    ('c0000001-0000-0000-0000-000000000003', 'Inside Out 2', 'Phan tiep theo cua bo phim hoat hinh dinh dam', 100, 'Tieng Anh', 'P', NULL, NULL, '2026-06-20', '2026-08-01', 'COMING_SOON');
+    ('c0000001-0000-0000-0000-000000000003', 'Inside Out 2', 'Phan tiep theo cua bo phim hoat hinh dinh dam', 100, 'Tieng Anh', 'P', NULL, NULL, '2026-06-20', '2026-08-01', 'COMING_SOON')
+ON CONFLICT DO NOTHING;
 
 -- Movie genres
 INSERT INTO movie_genres (movie_id, genre_id) VALUES
     ('c0000001-0000-0000-0000-000000000001', 'b0000001-0000-0000-0000-000000000001'),
     ('c0000001-0000-0000-0000-000000000001', 'b0000001-0000-0000-0000-000000000005'),
     ('c0000001-0000-0000-0000-000000000002', 'b0000001-0000-0000-0000-000000000006'),
-    ('c0000001-0000-0000-0000-000000000003', 'b0000001-0000-0000-0000-000000000006');
+    ('c0000001-0000-0000-0000-000000000003', 'b0000001-0000-0000-0000-000000000006')
+ON CONFLICT DO NOTHING;
 
 -- Rooms
 INSERT INTO rooms (room_id, room_name, total_rows, total_columns, status) VALUES
     ('d0000001-0000-0000-0000-000000000001', 'Phong 1', 5, 8, 'ACTIVE'),
-    ('d0000001-0000-0000-0000-000000000002', 'Phong 2', 6, 10, 'ACTIVE');
+    ('d0000001-0000-0000-0000-000000000002', 'Phong 2', 6, 10, 'ACTIVE')
+ON CONFLICT DO NOTHING;
 
 -- Seats for Room 1 (5 rows x 8 cols)
 INSERT INTO seats (seat_id, room_id, seat_type_id, row_label, seat_number, status) VALUES
@@ -87,30 +94,34 @@ INSERT INTO seats (seat_id, room_id, seat_type_id, row_label, seat_number, statu
     (gen_random_uuid(), 'd0000001-0000-0000-0000-000000000001', 'a0000001-0000-0000-0000-000000000002', 'E', 5, 'ACTIVE'),
     (gen_random_uuid(), 'd0000001-0000-0000-0000-000000000001', 'a0000001-0000-0000-0000-000000000002', 'E', 6, 'ACTIVE'),
     (gen_random_uuid(), 'd0000001-0000-0000-0000-000000000001', 'a0000001-0000-0000-0000-000000000002', 'E', 7, 'ACTIVE'),
-    (gen_random_uuid(), 'd0000001-0000-0000-0000-000000000001', 'a0000001-0000-0000-0000-000000000002', 'E', 8, 'ACTIVE');
+    (gen_random_uuid(), 'd0000001-0000-0000-0000-000000000001', 'a0000001-0000-0000-0000-000000000002', 'E', 8, 'ACTIVE')
+ON CONFLICT DO NOTHING;
 
 -- Showtimes
 INSERT INTO showtimes (showtime_id, movie_id, room_id, start_time, end_time, base_price, status) VALUES
      ('e0000001-0000-0000-0000-000000000001', 'c0000001-0000-0000-0000-000000000001', 'd0000001-0000-0000-0000-000000000001',
-     '2026-06-17 18:00:00', '2026-06-17 21:01:00', 85000, 'ACTIVE'),
+     CURRENT_TIMESTAMP + INTERVAL '1 day', CURRENT_TIMESTAMP + INTERVAL '1 day' + INTERVAL '3 hours', 85000, 'ACTIVE'),
     ('e0000001-0000-0000-0000-000000000002', 'c0000001-0000-0000-0000-000000000001', 'd0000001-0000-0000-0000-000000000001',
-     '2026-06-17 21:00:00', '2026-06-18 00:01:00', 95000, 'ACTIVE'),
+     CURRENT_TIMESTAMP + INTERVAL '1 day' + INTERVAL '3 hours', CURRENT_TIMESTAMP + INTERVAL '1 day' + INTERVAL '6 hours', 95000, 'ACTIVE'),
     ('e0000001-0000-0000-0000-000000000003', 'c0000001-0000-0000-0000-000000000001', 'd0000001-0000-0000-0000-000000000002',
-     '2026-06-18 15:00:00', '2026-06-18 18:01:00', 75000, 'ACTIVE'),
+     CURRENT_TIMESTAMP + INTERVAL '1 day' + INTERVAL '6 hours', CURRENT_TIMESTAMP + INTERVAL '1 day' + INTERVAL '9 hours', 75000, 'ACTIVE'),
     ('e0000001-0000-0000-0000-000000000004', 'c0000001-0000-0000-0000-000000000002', 'd0000001-0000-0000-0000-000000000001',
-     '2026-06-17 19:00:00', '2026-06-17 20:55:00', 65000, 'ACTIVE');
+     CURRENT_TIMESTAMP + INTERVAL '2 days', CURRENT_TIMESTAMP + INTERVAL '2 days' + INTERVAL '2 hours', 65000, 'ACTIVE')
+ON CONFLICT DO NOTHING;
 
 -- Additional genres
 INSERT INTO genres (genre_id, name, slug) VALUES
     ('b0000001-0000-0000-0000-000000000007', 'Toi pham', 'toi-pham'),
-    ('b0000001-0000-0000-0000-000000000008', 'Chinh kich', 'chinh-kich');
+    ('b0000001-0000-0000-0000-000000000008', 'Chinh kich', 'chinh-kich')
+ON CONFLICT DO NOTHING;
 
 -- Additional movies
 INSERT INTO movies (movie_id, title, description, duration, language, age_rating, trailer_url, poster_url, showing_start_date, showing_end_date, status) VALUES
     ('c0000001-0000-0000-0000-000000000004', 'The Batman', 'Batman doi mat voi cau do tu ten toi pham bi an Riddler', 176, 'Tieng Anh', 'T16', NULL, 'https://picsum.photos/seed/movie4/300/450', '2026-06-01', '2026-07-30', 'ACTIVE'),
     ('c0000001-0000-0000-0000-000000000005', 'Interstellar', 'Chuyen phieu luu vu tru de tim hanh tinh moi cho nhan loai', 169, 'Tieng Anh', 'P', NULL, 'https://picsum.photos/seed/movie5/300/450', '2026-06-10', '2026-08-15', 'ACTIVE'),
     ('c0000001-0000-0000-0000-000000000006', 'Spider-Man: No Way Home', 'Peter Parker doi mat voi hau qua khi bi lo thanh phan bi mat', 148, 'Tieng Anh', 'T13', NULL, 'https://picsum.photos/seed/movie6/300/450', '2026-06-05', '2026-07-25', 'ACTIVE'),
-    ('c0000001-0000-0000-0000-000000000007', 'Fast & Furious X', 'Gia dinh Toretto doi mat voi sat thu nguy hiem nhat tu qua khu', 141, 'Tieng Anh', 'T16', NULL, 'https://picsum.photos/seed/movie7/300/450', '2026-06-15', '2026-08-10', 'ACTIVE');
+    ('c0000001-0000-0000-0000-000000000007', 'Fast & Furious X', 'Gia dinh Toretto doi mat voi sat thu nguy hiem nhat tu qua khu', 141, 'Tieng Anh', 'T16', NULL, 'https://picsum.photos/seed/movie7/300/450', '2026-06-15', '2026-08-10', 'ACTIVE')
+ON CONFLICT DO NOTHING;
 
 -- Additional movie genres
 INSERT INTO movie_genres (movie_id, genre_id) VALUES
@@ -120,7 +131,8 @@ INSERT INTO movie_genres (movie_id, genre_id) VALUES
     ('c0000001-0000-0000-0000-000000000005', 'b0000001-0000-0000-0000-000000000003'),
     ('c0000001-0000-0000-0000-000000000006', 'b0000001-0000-0000-0000-000000000001'),
     ('c0000001-0000-0000-0000-000000000006', 'b0000001-0000-0000-0000-000000000005'),
-    ('c0000001-0000-0000-0000-000000000007', 'b0000001-0000-0000-0000-000000000001');
+    ('c0000001-0000-0000-0000-000000000007', 'b0000001-0000-0000-0000-000000000001')
+ON CONFLICT DO NOTHING;
 
 -- Seats for Room 2 (6 rows x 10 cols)
 INSERT INTO seats (seat_id, room_id, seat_type_id, row_label, seat_number, status) VALUES
@@ -183,36 +195,40 @@ INSERT INTO seats (seat_id, room_id, seat_type_id, row_label, seat_number, statu
     (gen_random_uuid(), 'd0000001-0000-0000-0000-000000000002', 'a0000001-0000-0000-0000-000000000003', 'F', 7, 'ACTIVE'),
     (gen_random_uuid(), 'd0000001-0000-0000-0000-000000000002', 'a0000001-0000-0000-0000-000000000003', 'F', 8, 'ACTIVE'),
     (gen_random_uuid(), 'd0000001-0000-0000-0000-000000000002', 'a0000001-0000-0000-0000-000000000003', 'F', 9, 'ACTIVE'),
-    (gen_random_uuid(), 'd0000001-0000-0000-0000-000000000002', 'a0000001-0000-0000-0000-000000000003', 'F', 10, 'ACTIVE');
+    (gen_random_uuid(), 'd0000001-0000-0000-0000-000000000002', 'a0000001-0000-0000-0000-000000000003', 'F', 10, 'ACTIVE')
+ON CONFLICT DO NOTHING;
 
 -- Additional showtimes
 INSERT INTO showtimes (showtime_id, movie_id, room_id, start_time, end_time, base_price, status) VALUES
     ('e0000001-0000-0000-0000-000000000005', 'c0000001-0000-0000-0000-000000000002', 'd0000001-0000-0000-0000-000000000002',
-     '2026-06-18 10:00:00', '2026-06-18 11:55:00', 65000, 'ACTIVE'),
+     CURRENT_TIMESTAMP + INTERVAL '2 days', CURRENT_TIMESTAMP + INTERVAL '2 days' + INTERVAL '2 hours', 65000, 'ACTIVE'),
     ('e0000001-0000-0000-0000-000000000006', 'c0000001-0000-0000-0000-000000000004', 'd0000001-0000-0000-0000-000000000001',
-     '2026-06-17 18:30:00', '2026-06-17 21:26:00', 90000, 'ACTIVE'),
+     CURRENT_TIMESTAMP + INTERVAL '1 day' + INTERVAL '8 hours', CURRENT_TIMESTAMP + INTERVAL '1 day' + INTERVAL '11 hours', 90000, 'ACTIVE'),
     ('e0000001-0000-0000-0000-000000000007', 'c0000001-0000-0000-0000-000000000004', 'd0000001-0000-0000-0000-000000000002',
-     '2026-06-18 13:00:00', '2026-06-18 15:56:00', 85000, 'ACTIVE'),
+     CURRENT_TIMESTAMP + INTERVAL '2 days' + INTERVAL '3 hours', CURRENT_TIMESTAMP + INTERVAL '2 days' + INTERVAL '6 hours', 85000, 'ACTIVE'),
     ('e0000001-0000-0000-0000-000000000008', 'c0000001-0000-0000-0000-000000000005', 'd0000001-0000-0000-0000-000000000001',
-     '2026-06-17 20:00:00', '2026-06-17 22:49:00', 85000, 'ACTIVE'),
+     CURRENT_TIMESTAMP + INTERVAL '1 day' + INTERVAL '4 hours', CURRENT_TIMESTAMP + INTERVAL '1 day' + INTERVAL '7 hours', 85000, 'ACTIVE'),
     ('e0000001-0000-0000-0000-000000000009', 'c0000001-0000-0000-0000-000000000005', 'd0000001-0000-0000-0000-000000000002',
-     '2026-06-18 16:00:00', '2026-06-18 18:49:00', 85000, 'ACTIVE'),
+     CURRENT_TIMESTAMP + INTERVAL '2 days' + INTERVAL '6 hours', CURRENT_TIMESTAMP + INTERVAL '2 days' + INTERVAL '9 hours', 85000, 'ACTIVE'),
     ('e0000001-0000-0000-0000-000000000010', 'c0000001-0000-0000-0000-000000000006', 'd0000001-0000-0000-0000-000000000001',
-     '2026-06-18 10:00:00', '2026-06-18 12:28:00', 80000, 'ACTIVE'),
+     CURRENT_TIMESTAMP + INTERVAL '1 day' + INTERVAL '2 hours', CURRENT_TIMESTAMP + INTERVAL '1 day' + INTERVAL '5 hours', 80000, 'ACTIVE'),
     ('e0000001-0000-0000-0000-000000000011', 'c0000001-0000-0000-0000-000000000006', 'd0000001-0000-0000-0000-000000000002',
-     '2026-06-18 14:00:00', '2026-06-18 16:28:00', 80000, 'ACTIVE'),
+     CURRENT_TIMESTAMP + INTERVAL '2 days' + INTERVAL '2 hours', CURRENT_TIMESTAMP + INTERVAL '2 days' + INTERVAL '5 hours', 80000, 'ACTIVE'),
     ('e0000001-0000-0000-0000-000000000012', 'c0000001-0000-0000-0000-000000000007', 'd0000001-0000-0000-0000-000000000001',
-     '2026-06-18 17:00:00', '2026-06-18 19:21:00', 85000, 'ACTIVE'),
+     CURRENT_TIMESTAMP + INTERVAL '1 day' + INTERVAL '1 hour', CURRENT_TIMESTAMP + INTERVAL '1 day' + INTERVAL '4 hours', 85000, 'ACTIVE'),
     ('e0000001-0000-0000-0000-000000000013', 'c0000001-0000-0000-0000-000000000007', 'd0000001-0000-0000-0000-000000000002',
-     '2026-06-18 19:30:00', '2026-06-18 21:51:00', 85000, 'ACTIVE');
+     CURRENT_TIMESTAMP + INTERVAL '1 day' + INTERVAL '12 hours', CURRENT_TIMESTAMP + INTERVAL '1 day' + INTERVAL '15 hours', 85000, 'ACTIVE')
+ON CONFLICT DO NOTHING;
 
 -- Combos
 INSERT INTO combos (combo_id, combo_name, description, price, status) VALUES
     ('f0000001-0000-0000-0000-000000000001', 'Combo Solo', '1 bap rang bo + 1 nuoc ngot', 55000, 'ACTIVE'),
     ('f0000001-0000-0000-0000-000000000002', 'Combo Doi', '2 bap rang bo + 2 nuoc ngot', 99000, 'ACTIVE'),
-    ('f0000001-0000-0000-0000-000000000003', 'Combo Gia dinh', '3 bap rang bo + 3 nuoc ngot + 1 bong ngo', 149000, 'ACTIVE');
+    ('f0000001-0000-0000-0000-000000000003', 'Combo Gia dinh', '3 bap rang bo + 3 nuoc ngot + 1 bong ngo', 149000, 'ACTIVE')
+ON CONFLICT DO NOTHING;
 
 -- Coupons
 INSERT INTO coupons (coupon_id, code, discount_type, discount_value, quantity, min_order_value, expired_at, status) VALUES
-    ('00000000-0000-0000-0000-000000000011', 'WELCOME10', 'PERCENTAGE', 10, 100, 0, '2026-12-31 23:59:59', 'ACTIVE'),
-    ('00000000-0000-0000-0000-000000000012', 'SAVE50K', 'FIXED_AMOUNT', 50000, 50, 200000, '2026-12-31 23:59:59', 'ACTIVE');
+    ('00000000-0000-0000-0000-000000000011', 'WELCOME10', 'PERCENTAGE', 10, 100, 0, CURRENT_TIMESTAMP + INTERVAL '6 months', 'ACTIVE'),
+    ('00000000-0000-0000-0000-000000000012', 'SAVE50K', 'FIXED_AMOUNT', 50000, 50, 200000, CURRENT_TIMESTAMP + INTERVAL '6 months', 'ACTIVE')
+ON CONFLICT DO NOTHING;

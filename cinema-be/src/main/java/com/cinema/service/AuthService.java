@@ -77,7 +77,7 @@ public class AuthService {
     @Transactional
     public ProfileResponse updateProfile(UserPrincipal principal, UpdateProfileRequest request) {
         User user = userRepository.findById(java.util.UUID.fromString(principal.getUserId()))
-                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Người dùng không tồn tại"));
 
         if (request.getFullName() != null) user.setFullName(request.getFullName());
         if (request.getPhone() != null) user.setPhone(request.getPhone());
@@ -91,7 +91,7 @@ public class AuthService {
 
     public ProfileResponse getProfile(UserPrincipal principal) {
         User user = userRepository.findById(java.util.UUID.fromString(principal.getUserId()))
-                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Người dùng không tồn tại"));
         return toProfileResponse(user);
     }
 
@@ -109,7 +109,7 @@ public class AuthService {
 
     public void forgotPassword(ForgotPasswordRequest request) {
         User user = userRepository.findByEmail(request.getEmail())
-                .orElseThrow(() -> new BadRequestException("Email not found"));
+                .orElseThrow(() -> new BadRequestException("Email không tồn tại"));
 
         String code = String.format("%06d", new Random().nextInt(999999));
 
@@ -124,22 +124,26 @@ public class AuthService {
         try {
             SimpleMailMessage message = new SimpleMailMessage();
             message.setTo(user.getEmail());
-            message.setSubject("Cinema - Dat lai mat khau");
-            message.setText("Ma xac nhan dat lai mat khau cua ban la: " + code + "\n\nMa co hieu luc trong 10 phut.");
+            message.setSubject("Cinema - Đặt lại mật khẩu");
+            message.setText("Mã xác nhận đặt lại mật khẩu của bạn là: " + code + "\n\nMã có hiệu lực trong 10 phút.");
             mailSender.send(message);
         } catch (Exception e) {
             System.err.println("Failed to send email to " + user.getEmail() + ": " + e.getMessage());
         }
+
+        System.out.println("======================================");
+        System.out.println("OTP for " + user.getEmail() + ": " + code);
+        System.out.println("======================================");
     }
 
     @Transactional
     public void resetPassword(ResetPasswordRequest request) {
         PasswordResetToken token = passwordResetTokenRepository
                 .findByEmailAndCodeAndUsedFalse(request.getEmail(), request.getCode())
-                .orElseThrow(() -> new BadRequestException("Invalid or expired code"));
+                .orElseThrow(() -> new BadRequestException("Mã không hợp lệ hoặc đã hết hạn"));
 
         if (token.getExpiresAt().isBefore(LocalDateTime.now())) {
-            throw new BadRequestException("Code has expired");
+            throw new BadRequestException("Mã đã hết hạn");
         }
 
         User user = userRepository.findByEmail(request.getEmail())

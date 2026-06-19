@@ -11,22 +11,35 @@ export default function Login() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [remember, setRemember] = useState(false)
-  const [error, setError] = useState('')
+  const [errors, setErrors] = useState({})
+  const [serverError, setServerError] = useState('')
   const [loading, setLoading] = useState(false)
   const { login } = useAuth()
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
 
+  const validate = () => {
+    const errs = {}
+    if (!email.trim()) errs.email = 'Vui lòng nhập email'
+    else if (!/\S+@\S+\.\S+/.test(email)) errs.email = 'Email không hợp lệ'
+    if (!password) errs.password = 'Vui lòng nhập mật khẩu'
+    return errs
+  }
+
   const handleSubmit = async (e) => {
     e.preventDefault()
-    setError('')
+    const errs = validate()
+    setErrors(errs)
+    if (Object.keys(errs).length > 0) return
+
+    setServerError('')
     setLoading(true)
     try {
       await login(email, password)
       const redirect = searchParams.get('redirect') || '/'
       navigate(redirect)
     } catch (err) {
-      setError(err.response?.data?.error || 'Email hoặc mật khẩu không đúng')
+      setServerError(err.response?.data?.error || 'Email hoặc mật khẩu không đúng')
     } finally {
       setLoading(false)
     }
@@ -54,13 +67,13 @@ export default function Login() {
             </div>
           )}
 
-          {error && (
+          {serverError && (
             <div className="bg-red-500/10 border border-red-500/30 text-red-400 px-4 py-3 rounded-xl text-sm text-center">
-              {error}
+              {serverError}
             </div>
           )}
 
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <form onSubmit={handleSubmit} noValidate className="space-y-4">
             <Input
               label="Email"
               type="email"
@@ -68,7 +81,7 @@ export default function Login() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               icon={Mail}
-              required
+              error={errors.email}
             />
             <Input
               label="Mật khẩu"
@@ -77,7 +90,7 @@ export default function Login() {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               icon={Lock}
-              required
+              error={errors.password}
             />
 
             <div className="flex items-center justify-between">
