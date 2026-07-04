@@ -6,9 +6,9 @@ spring:
     name: cinema-be
 
   datasource:
-    url: jdbc:postgresql://localhost:5432/CinemaDB
-    username: postgres
-    password: 29072009tara
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/CinemaDB}
+    username: ${SPRING_DATASOURCE_USERNAME:postgres}
+    password: ${SPRING_DATASOURCE_PASSWORD:29072009tara}
     driver-class-name: org.postgresql.Driver
     hikari:
       maximum-pool-size: 20
@@ -35,8 +35,8 @@ spring:
 
   data:
     redis:
-      host: localhost
-      port: 6379
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
       timeout: 2000ms
       lettuce:
         pool:
@@ -90,7 +90,7 @@ app:
     seat-lock-ttl: 900
     max-seats-per-booking: 8
   cors:
-    allowed-origins: http://localhost:5173,http://localhost:3000
+    allowed-origins: ${APP_CORS_ALLOWED_ORIGINS:http://localhost:5173,http://localhost:3000}
 
 logging:
   level:
