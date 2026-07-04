@@ -118,6 +118,7 @@ CREATE TABLE rooms (
     room_name       VARCHAR(100) NOT NULL,
     total_rows      INT NOT NULL CHECK (total_rows > 0),
     total_columns   INT NOT NULL CHECK (total_columns > 0),
+    aisle_after_columns VARCHAR(50) DEFAULT '4',
     status          entity_status NOT NULL DEFAULT 'ACTIVE',
     created_at      TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     updated_at      TIMESTAMP WITH TIME ZONE DEFAULT NOW()

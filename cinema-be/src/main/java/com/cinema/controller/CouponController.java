@@ -1,6 +1,9 @@
 package com.cinema.controller;
 
+import java.util.List;
+
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -19,6 +22,11 @@ import lombok.RequiredArgsConstructor;
 public class CouponController {
 
     private final CouponService couponService;
+
+    @GetMapping("/active")
+    public ResponseEntity<List<CouponResponse>> getActiveCoupons() {
+        return ResponseEntity.ok(couponService.getActiveCoupons());
+    }
 
     @PostMapping("/apply")
     public ResponseEntity<CouponResponse> applyCoupon(@Valid @RequestBody ApplyCouponRequest request) {

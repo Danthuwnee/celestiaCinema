@@ -1,5 +1,6 @@
 package com.cinema.repository;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -22,4 +23,7 @@ public interface CouponRepository extends JpaRepository<Coupon, UUID> {
 
     @Query("SELECT c FROM Coupon c WHERE c.code = :code AND c.status = 'ACTIVE' AND c.expiredAt > CURRENT_TIMESTAMP AND c.quantity > 0")
     Optional<Coupon> findActiveCouponByCode(@Param("code") String code);
+
+    @Query("SELECT c FROM Coupon c WHERE c.status = 'ACTIVE' AND c.expiredAt > CURRENT_TIMESTAMP AND c.quantity > 0")
+    List<Coupon> findAllActiveCoupons();
 }

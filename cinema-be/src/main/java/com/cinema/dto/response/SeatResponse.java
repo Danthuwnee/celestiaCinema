@@ -23,4 +23,5 @@ public class SeatResponse {
     private String colorHex;
     private BigDecimal calculatedPrice;
     private String status;
+    private String aisleAfterColumns;
 }

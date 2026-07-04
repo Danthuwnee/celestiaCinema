@@ -2,6 +2,7 @@ import { useSearchParams, Link } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { motion } from 'framer-motion'
 import { CheckCircle, XCircle, Clock, ArrowRight, Home, History, Ticket, MapPin, CreditCard } from 'lucide-react'
+import { useAuth } from '../contexts/AuthContext'
 import bookingApi from '../api/bookingApi'
 import Loading from '../components/ui/Loading'
 
@@ -25,6 +26,7 @@ function formatTime(dateStr) {
 }
 
 export default function BookingSuccess() {
+  const { user } = useAuth()
   const [searchParams] = useSearchParams()
   const bookingId = searchParams.get('bookingId')
 
@@ -165,7 +167,9 @@ export default function BookingSuccess() {
 
             <div className="bg-white/5 p-6 flex gap-3 justify-center border-t border-dashed border-white/10">
               <Link to="/" className="btn-secondary inline-flex items-center gap-2 text-sm flex-1 justify-center"><Home size={16} /> Trang chủ</Link>
-              <Link to="/bookings" className="btn-primary inline-flex items-center gap-2 text-sm flex-1 justify-center"><History size={16} /> Lịch sử vé</Link>
+              {user?.role !== 'ADMIN' && (
+                <Link to="/bookings" className="btn-primary inline-flex items-center gap-2 text-sm flex-1 justify-center"><History size={16} /> Lịch sử vé</Link>
+              )}
             </div>
           </div>
         ) : (
@@ -184,7 +188,9 @@ export default function BookingSuccess() {
                 <p><span className="text-text-muted">Tổng:</span> <span className="font-bold galaxy-text-gradient">{booking.totalAmount?.toLocaleString()}₫</span></p>
               </div>
             )}
-            <Link to="/bookings" className="btn-primary inline-flex items-center gap-2"><ArrowRight size={16} /> Xem lịch sử</Link>
+            {user?.role !== 'ADMIN' && (
+              <Link to="/bookings" className="btn-primary inline-flex items-center gap-2"><ArrowRight size={16} /> Xem lịch sử</Link>
+            )}
           </div>
         )}
       </motion.div>

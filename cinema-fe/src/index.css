@@ -98,3 +98,6 @@ body::before {
 ::-webkit-scrollbar-track { background: #0B1026; }
 ::-webkit-scrollbar-thumb { background: #6C3BFF; border-radius: 4px; }
 ::-webkit-scrollbar-thumb:hover { background: #FF4FD8; }
+
+.no-scrollbar::-webkit-scrollbar { display: none; }
+.no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }

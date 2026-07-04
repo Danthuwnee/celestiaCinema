@@ -45,6 +45,10 @@ public class Room {
     @Column(nullable = false)
     private Integer totalColumns;
 
+    @Column(length = 50)
+    @Builder.Default
+    private String aisleAfterColumns = "4";
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private EntityStatus status;

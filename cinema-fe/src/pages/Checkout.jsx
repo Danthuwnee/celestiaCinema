@@ -2,7 +2,8 @@ import { useState, useEffect, useMemo, useCallback, useRef } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { motion, AnimatePresence } from 'framer-motion'
-import { ChevronRight, Minus, Plus, Ticket, ShoppingBag, CreditCard, Clock, CheckCircle, AlertCircle } from 'lucide-react'
+import { ChevronRight, Minus, Plus, Ticket, ShoppingBag, CreditCard, Clock, CheckCircle, X, AlertCircle } from 'lucide-react'
+import { useAuth } from '../contexts/AuthContext'
 import bookingApi from '../api/bookingApi'
 import paymentApi from '../api/paymentApi'
 import comboApi from '../api/comboApi'
@@ -23,7 +24,15 @@ const TIMEOUT_MS = 180_000
 export default function Checkout() {
   const location = useLocation()
   const navigate = useNavigate()
+  const { user } = useAuth()
   const { showtimeId, seats } = location.state || {}
+
+  useEffect(() => {
+    if (user?.role === 'ADMIN') {
+      alert('Tài khoản admin không thể đặt vé')
+      navigate('/', { replace: true })
+    }
+  }, [user, navigate])
   const [couponCode, setCouponCode] = useState('')
   const [comboQtys, setComboQtys] = useState({})
   const [step, setStep] = useState('review')
@@ -227,30 +236,57 @@ export default function Checkout() {
 
       {/* Combos */}
       <div className="glass-card p-6 mb-4">
-        <h2 className="font-semibold mb-4 flex items-center gap-2"><ShoppingBag size={16} className="text-galaxy-pink" /> Bắp nước</h2>
+        <h2 className="font-semibold mb-1 flex items-center gap-2"><ShoppingBag size={16} className="text-galaxy-pink" /> Bắp nước</h2>
+        {combos && (
+          <div className="flex flex-wrap gap-1.5 mb-4 min-h-[28px]">
+            {combos.some(c => (comboQtys[c.comboId] || 0) > 0) ? (
+              combos.filter(c => (comboQtys[c.comboId] || 0) > 0).map(c => (
+                <span key={c.comboId} className="inline-flex items-center gap-1 text-xs bg-galaxy-cyan/15 text-galaxy-cyan border border-galaxy-cyan/30 px-2 py-1 rounded-full">
+                  {c.comboName}
+                  <span className="font-bold">x{comboQtys[c.comboId]}</span>
+                  <button onClick={() => setComboQtys(prev => ({ ...prev, [c.comboId]: 0 }))} className="hover:text-white transition-colors ml-0.5">
+                    <X size={12} />
+                  </button>
+                </span>
+              ))
+            ) : (
+              <span className="text-xs text-text-muted italic">(Chưa chọn bắp nước)</span>
+            )}
+          </div>
+        )}
         {!combos ? (
           <Loading text="Đang tải..." />
         ) : (
-          <div className="space-y-3">
-            {combos.map(combo => (
-              <div key={combo.comboId} className="flex items-center justify-between py-2 border-b border-white/5 last:border-0">
-                <div className="flex items-center gap-3">
-                  {combo.imageUrl && (
-                    <img src={combo.imageUrl} alt={combo.comboName} className="w-12 h-12 rounded-lg object-cover shrink-0" />
-                  )}
-                  <div>
-                    <p className="font-medium text-sm">{combo.comboName}</p>
-                    <p className="text-xs text-text-muted">{combo.description}</p>
-                    <p className="text-sm text-galaxy-cyan font-semibold">{combo.price.toLocaleString()}₫</p>
+          <div className="space-y-1">
+            {combos.map(combo => {
+              const qty = comboQtys[combo.comboId] || 0
+              return (
+                <div key={combo.comboId} className={`flex items-center justify-between py-2.5 px-3 rounded-xl border transition-all duration-200 ${qty > 0 ? 'bg-galaxy-cyan/5 border-galaxy-cyan/40' : 'border-transparent hover:bg-white/[0.03]'}`}>
+                  <div className="flex items-center gap-3 min-w-0">
+                    <div className="relative shrink-0">
+                      {combo.imageUrl && (
+                        <img src={combo.imageUrl} alt={combo.comboName} className="w-12 h-12 rounded-lg object-cover" />
+                      )}
+                      {qty > 0 && (
+                        <div className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-galaxy-cyan rounded-full flex items-center justify-center">
+                          <CheckCircle size={10} className="text-white" />
+                        </div>
+                      )}
+                    </div>
+                    <div className="min-w-0">
+                      <p className="font-medium text-sm truncate">{combo.comboName}</p>
+                      <p className="text-xs text-text-muted truncate">{combo.description}</p>
+                      <p className="text-sm text-galaxy-cyan font-semibold">{combo.price.toLocaleString()}₫</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2 shrink-0 ml-3">
+                    <button onClick={() => setComboQtys(prev => ({ ...prev, [combo.comboId]: Math.max(0, (prev[combo.comboId] || 0) - 1) }))} className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center transition-all"><Minus size={14} /></button>
+                    <motion.span key={qty} initial={{ scale: 1 }} animate={{ scale: [1, 1.35, 1] }} transition={{ duration: 0.25 }} className="w-6 text-center font-semibold tabular-nums">{qty}</motion.span>
+                    <button onClick={() => setComboQtys(prev => ({ ...prev, [combo.comboId]: (prev[combo.comboId] || 0) + 1 }))} className="w-8 h-8 rounded-full bg-button-glow flex items-center justify-center transition-all hover:shadow-lg hover:shadow-galaxy-purple/30"><Plus size={14} /></button>
                   </div>
                 </div>
-                <div className="flex items-center gap-2">
-                  <button onClick={() => setComboQtys(prev => ({ ...prev, [combo.comboId]: Math.max(0, (prev[combo.comboId] || 0) - 1) }))} className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center transition-all"><Minus size={14} /></button>
-                  <span className="w-6 text-center font-semibold">{comboQtys[combo.comboId] || 0}</span>
-                  <button onClick={() => setComboQtys(prev => ({ ...prev, [combo.comboId]: (prev[combo.comboId] || 0) + 1 }))} className="w-8 h-8 rounded-full bg-button-glow flex items-center justify-center transition-all hover:shadow-lg hover:shadow-galaxy-purple/30"><Plus size={14} /></button>
-                </div>
-              </div>
-            ))}
+              )
+            })}
           </div>
         )}
       </div>

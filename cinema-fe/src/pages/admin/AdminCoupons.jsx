@@ -7,6 +7,18 @@ import Button from '../../components/ui/Button'
 import Modal from '../../components/ui/Modal'
 import Loading from '../../components/ui/Loading'
 
+function generateCouponCode(existingCodes) {
+  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'
+  let code
+  do {
+    code = 'GG'
+    for (let i = 0; i < 6; i++) {
+      code += chars.charAt(Math.floor(Math.random() * chars.length))
+    }
+  } while (existingCodes.includes(code))
+  return code
+}
+
 export default function AdminCoupons() {
   const queryClient = useQueryClient()
   const [showForm, setShowForm] = useState(false)
@@ -19,10 +31,17 @@ export default function AdminCoupons() {
     queryFn: () => adminApi.getCoupons().then(r => r.data),
   })
 
-  const coupons = data?.content || data || []
+  const coupons = (data?.content || data || [])
 
   const resetForm = () => {
-    setForm({ code: '', discountType: 'PERCENTAGE', discountValue: 10, quantity: 100, minOrderValue: 0, expiredAt: '' })
+    setForm({
+      code: generateCouponCode(coupons.map(c => c.code)),
+      discountType: 'PERCENTAGE',
+      discountValue: 10,
+      quantity: 100,
+      minOrderValue: 0,
+      expiredAt: '',
+    })
     setEditingCoupon(null)
     setFormError('')
   }
@@ -84,7 +103,17 @@ export default function AdminCoupons() {
       <Modal isOpen={showForm} onClose={() => { setShowForm(false); resetForm() }} title={editingCoupon ? 'Sửa mã giảm giá' : 'Thêm mã giảm giá'}>
         <form onSubmit={handleSubmit} className="space-y-3">
           {formError && <div className="bg-red-500/10 border border-red-500/30 text-red-400 px-4 py-3 rounded-xl text-sm text-center">{formError}</div>}
-          <div><label className="text-sm text-text-secondary">Mã code</label><input type="text" value={form.code} onChange={(e) => setForm(p => ({ ...p, code: e.target.value.toUpperCase() }))} className="input-field mt-1" required /></div>
+          <div>
+            <label className="text-sm text-text-secondary">Mã code</label>
+            <div className="flex items-center gap-2 mt-1">
+              <input type="text" value={form.code} onChange={(e) => setForm(p => ({ ...p, code: e.target.value.toUpperCase() }))} className="input-field flex-1" required />
+              {!editingCoupon && (
+                <button type="button" onClick={() => setForm(p => ({ ...p, code: generateCouponCode(coupons.map(c => c.code)) }))} className="text-xs text-galaxy-cyan hover:text-white transition-colors shrink-0">
+                  Sinh mã
+                </button>
+              )}
+            </div>
+          </div>
           <div>
             <label className="text-sm text-text-secondary">Loại</label>
             <select value={form.discountType} onChange={(e) => setForm(p => ({ ...p, discountType: e.target.value }))} className="input-field mt-1">

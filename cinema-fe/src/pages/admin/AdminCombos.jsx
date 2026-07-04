@@ -59,7 +59,17 @@ export default function AdminCombos() {
           <div><label className="text-sm text-text-secondary">Tên combo</label><input type="text" value={form.comboName} onChange={(e) => setForm(p => ({ ...p, comboName: e.target.value }))} className="input-field mt-1" required /></div>
           <div><label className="text-sm text-text-secondary">Mô tả</label><textarea rows={2} value={form.description} onChange={(e) => setForm(p => ({ ...p, description: e.target.value }))} className="input-field mt-1" /></div>
           <div><label className="text-sm text-text-secondary">Giá</label><input type="number" value={form.price} onChange={(e) => setForm(p => ({ ...p, price: +e.target.value }))} className="input-field mt-1" /></div>
-          <div><label className="text-sm text-text-secondary">Hình ảnh URL</label><input type="text" value={form.imageUrl} onChange={(e) => setForm(p => ({ ...p, imageUrl: e.target.value }))} className="input-field mt-1" /></div>
+          <div>
+            <label className="text-sm text-text-secondary">Hình ảnh URL</label>
+            <input type="text" value={form.imageUrl} onChange={(e) => setForm(p => ({ ...p, imageUrl: e.target.value }))} className="input-field mt-1" />
+            {form.imageUrl && (
+              <div className="mt-2">
+                <img src={form.imageUrl} alt="Preview"
+                  className="w-24 h-24 object-cover rounded-lg border border-white/10"
+                  onError={(e) => { e.target.style.display = 'none' }} />
+              </div>
+            )}
+          </div>
           <Button type="submit" className="w-full">{editingCombo ? 'Cập nhật' : 'Lưu'}</Button>
         </form>
       </Modal>

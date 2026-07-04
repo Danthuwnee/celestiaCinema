@@ -1,10 +1,13 @@
 package com.cinema.controller.admin;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
+
+import jakarta.validation.Valid;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.transaction.annotation.Transactional;
@@ -18,6 +21,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.cinema.dto.request.CreateRoomRequest;
+import com.cinema.dto.request.UpdateRoomRequest;
 import com.cinema.entity.Room;
 import com.cinema.entity.Seat;
 import com.cinema.entity.SeatType;
@@ -48,17 +52,29 @@ public class AdminRoomController {
         return ResponseEntity.ok(roomRepository.findAll());
     }
 
+    @GetMapping("/{roomId}/seats")
+    public ResponseEntity<Map<String, UUID>> getRoomSeatTypes(@PathVariable UUID roomId) {
+        List<Seat> seats = seatRepository.findActiveSeatsByRoom(roomId);
+        Map<String, UUID> rowSeatTypes = seats.stream()
+                .collect(Collectors.toMap(
+                        Seat::getRowLabel,
+                        s -> s.getSeatType().getSeatTypeId(),
+                        (existing, replacement) -> existing));
+        return ResponseEntity.ok(rowSeatTypes);
+    }
+
     @GetMapping("/seat-types")
     public ResponseEntity<List<SeatType>> getSeatTypes() {
         return ResponseEntity.ok(seatTypeRepository.findAll());
     }
 
     @PostMapping
-    public ResponseEntity<Room> createRoom(@RequestBody CreateRoomRequest request) {
+    public ResponseEntity<Room> createRoom(@Valid @RequestBody CreateRoomRequest request) {
         Room room = Room.builder()
                 .roomName(request.getRoomName())
                 .totalRows(request.getTotalRows())
                 .totalColumns(request.getTotalColumns())
+                .aisleAfterColumns(request.getAisleAfterColumns() != null ? request.getAisleAfterColumns() : "4")
                 .status(EntityStatus.ACTIVE)
                 .build();
         room = roomRepository.save(room);
@@ -67,16 +83,30 @@ public class AdminRoomController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<Room> updateRoom(@PathVariable UUID id, @RequestBody Room room) {
+    @Transactional
+    public ResponseEntity<Room> updateRoom(@PathVariable UUID id, @Valid @RequestBody UpdateRoomRequest request) {
         Room existing = roomRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Room not found"));
         if (hasActiveShowtimes(id)) {
             throw new BadRequestException("Cannot modify room with active showtimes");
         }
-        if (room.getRoomName() != null) existing.setRoomName(room.getRoomName());
-        if (room.getTotalRows() != null) existing.setTotalRows(room.getTotalRows());
-        if (room.getTotalColumns() != null) existing.setTotalColumns(room.getTotalColumns());
-        if (room.getStatus() != null) existing.setStatus(room.getStatus());
+        if (request.getRoomName() != null) existing.setRoomName(request.getRoomName());
+        if (request.getTotalRows() != null) existing.setTotalRows(request.getTotalRows());
+        if (request.getTotalColumns() != null) existing.setTotalColumns(request.getTotalColumns());
+        if (request.getAisleAfterColumns() != null) existing.setAisleAfterColumns(request.getAisleAfterColumns());
+        if (request.getStatus() != null) existing.setStatus(EntityStatus.valueOf(request.getStatus()));
+        existing = roomRepository.save(existing);
+
+        if (request.getRowSeatTypes() != null) {
+            List<Seat> oldSeats = seatRepository.findByRoomRoomIdOrderByRowLabelAscSeatNumberAsc(id);
+            List<UUID> oldSeatIds = oldSeats.stream().map(Seat::getSeatId).collect(Collectors.toList());
+            if (!oldSeatIds.isEmpty()) {
+                bookingSeatRepository.deleteBySeatIdIn(oldSeatIds);
+                seatRepository.deleteSeatsByRoomId(id);
+            }
+            generateSeats(existing, request.getRowSeatTypes());
+        }
+
         return ResponseEntity.ok(roomRepository.save(existing));
     }
 
@@ -88,7 +118,7 @@ public class AdminRoomController {
         if (room.getStatus() != EntityStatus.INACTIVE) {
             throw new BadRequestException("Only inactive rooms can be permanently deleted");
         }
-        if (showtimeRepository.existsByRoomRoomIdAndStatus(id, EntityStatus.ACTIVE)) {
+        if (showtimeRepository.existsByRoomRoomIdAndStatusAndStartTimeGreaterThanEqual(id, EntityStatus.ACTIVE, LocalDateTime.now())) {
             throw new BadRequestException("Cannot delete room with active showtimes");
         }
         List<UUID> seatIds = seatRepository.findByRoomRoomIdOrderByRowLabelAscSeatNumberAsc(id)
@@ -141,6 +171,6 @@ public class AdminRoomController {
     }
 
     private boolean hasActiveShowtimes(UUID roomId) {
-        return showtimeRepository.existsByRoomRoomIdAndStatus(roomId, EntityStatus.ACTIVE);
+        return showtimeRepository.existsByRoomRoomIdAndStatusAndStartTimeGreaterThanEqual(roomId, EntityStatus.ACTIVE, LocalDateTime.now());
     }
 }

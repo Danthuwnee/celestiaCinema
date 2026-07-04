@@ -16,11 +16,12 @@ import lombok.Setter;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class CreateRoomRequest {
+public class UpdateRoomRequest {
     @NotBlank
     private String roomName;
-    private int totalRows;
-    private int totalColumns;
+    private Integer totalRows;
+    private Integer totalColumns;
     private String aisleAfterColumns;
+    private String status;
     private Map<String, UUID> rowSeatTypes;
 }

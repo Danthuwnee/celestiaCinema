@@ -14,7 +14,8 @@ export default function AdminMovies() {
   const [currentPage, setCurrentPage] = useState(0)
   const [totalPages, setTotalPages] = useState(0)
   const pageSize = 12
-  const [form, setForm] = useState({ title: '', description: '', duration: 120, language: 'Tiếng Việt', ageRating: 'T13', showingStartDate: '', showingEndDate: '', trailerUrl: '', posterUrl: '' })
+  const today = new Date().toISOString().split('T')[0]
+  const [form, setForm] = useState({ title: '', description: '', duration: 120, language: 'Tiếng Việt', ageRating: 'T13', showingStartDate: '', showingEndDate: '', trailerUrl: '', posterUrl: '', director: '', actors: '' })
 
   const { data, isLoading } = useQuery({
     queryKey: ['admin', 'movies', currentPage],
@@ -36,7 +37,7 @@ export default function AdminMovies() {
     queryClient.invalidateQueries({ queryKey: ['admin', 'movies'] })
     setShowForm(false)
     setEditingMovie(null)
-    setForm({ title: '', description: '', duration: 120, language: 'Tiếng Việt', ageRating: 'T13', showingStartDate: '', showingEndDate: '', trailerUrl: '', posterUrl: '' })
+    setForm({ title: '', description: '', duration: 120, language: 'Tiếng Việt', ageRating: 'T13', showingStartDate: '', showingEndDate: '', trailerUrl: '', posterUrl: '', director: '', actors: '' })
   }
 
   const handleEdit = (movie) => {
@@ -50,6 +51,8 @@ export default function AdminMovies() {
       showingEndDate: movie.showingEndDate || '',
       trailerUrl: movie.trailerUrl || '',
       posterUrl: movie.posterUrl || '',
+      director: movie.director || '',
+      actors: movie.actors || '',
     })
     setEditingMovie(movie)
     setShowForm(true)
@@ -67,7 +70,7 @@ export default function AdminMovies() {
     <div>
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-2xl font-bold flex items-center gap-2"><Film size={24} className="text-galaxy-cyan" /> Quản lý Phim</h1>
-        <Button onClick={() => { setForm({ title: '', description: '', duration: 120, language: 'Tiếng Việt', ageRating: 'T13', showingStartDate: '', showingEndDate: '', trailerUrl: '', posterUrl: '' }); setEditingMovie(null); setShowForm(true) }} className="flex items-center gap-2"><Plus size={16} /> Thêm phim</Button>
+        <Button onClick={() => { setForm({ title: '', description: '', duration: 120, language: 'Tiếng Việt', ageRating: 'T13', showingStartDate: '', showingEndDate: '', trailerUrl: '', posterUrl: '', director: '', actors: '' }); setEditingMovie(null); setShowForm(true) }} className="flex items-center gap-2"><Plus size={16} /> Thêm phim</Button>
       </div>
 
       <Modal isOpen={showForm} onClose={() => { setShowForm(false); setEditingMovie(null) }} title={editingMovie ? 'Sửa phim' : 'Thêm phim'}>
@@ -84,6 +87,28 @@ export default function AdminMovies() {
               <input type={type} value={form[field]} onChange={(e) => setForm(p => ({ ...p, [field]: e.target.value }))} className="input-field mt-1" required={field !== 'trailerUrl' && field !== 'posterUrl'} />
             </div>
           ))}
+          {form.posterUrl && (
+            <div>
+              <label className="text-sm text-text-secondary">Xem trước Poster</label>
+              <img src={form.posterUrl} alt="Poster preview" className="mt-1 h-40 w-auto rounded object-cover border border-white/10" onError={(e) => { e.target.style.display = 'none' }} />
+            </div>
+          )}
+          {form.trailerUrl && form.trailerUrl.includes('youtube.com') && (
+            <div>
+              <label className="text-sm text-text-secondary">Xem trước Trailer</label>
+              <div className="mt-1 aspect-video rounded overflow-hidden bg-black/50">
+                <iframe src={form.trailerUrl.replace('watch?v=', 'embed/')} className="w-full h-full" allowFullScreen title="Trailer preview" />
+              </div>
+            </div>
+          )}
+          <div>
+            <label className="text-sm text-text-secondary">Đạo diễn</label>
+            <input type="text" value={form.director} onChange={(e) => setForm(p => ({ ...p, director: e.target.value }))} className="input-field mt-1" />
+          </div>
+          <div>
+            <label className="text-sm text-text-secondary">Diễn viên</label>
+            <textarea value={form.actors} onChange={(e) => setForm(p => ({ ...p, actors: e.target.value }))} className="input-field mt-1" rows={2} />
+          </div>
           <div>
             <label className="text-sm text-text-secondary">Mô tả</label>
             <textarea value={form.description} onChange={(e) => setForm(p => ({ ...p, description: e.target.value }))} className="input-field mt-1" rows={3} />
@@ -95,8 +120,8 @@ export default function AdminMovies() {
             </select>
           </div>
           <div className="grid grid-cols-2 gap-3">
-            <div><label className="text-sm text-text-secondary">Ngày khởi chiếu</label><input type="date" value={form.showingStartDate} onChange={(e) => setForm(p => ({ ...p, showingStartDate: e.target.value }))} className="input-field mt-1" /></div>
-            <div><label className="text-sm text-text-secondary">Ngày kết thúc</label><input type="date" value={form.showingEndDate} onChange={(e) => setForm(p => ({ ...p, showingEndDate: e.target.value }))} className="input-field mt-1" /></div>
+            <div><label className="text-sm text-text-secondary">Ngày khởi chiếu</label><input type="date" min={today} value={form.showingStartDate} onChange={(e) => setForm(p => ({ ...p, showingStartDate: e.target.value }))} className="input-field mt-1" /></div>
+            <div><label className="text-sm text-text-secondary">Ngày kết thúc</label><input type="date" min={form.showingStartDate || today} value={form.showingEndDate} onChange={(e) => setForm(p => ({ ...p, showingEndDate: e.target.value }))} className="input-field mt-1" /></div>
           </div>
           <Button type="submit" className="w-full">{editingMovie ? 'Cập nhật' : 'Lưu'}</Button>
         </form>

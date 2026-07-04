@@ -31,30 +31,42 @@ public class BookingController {
     private final BookingService bookingService;
 
     @PostMapping
-    public ResponseEntity<BookingResponse> createBooking(
+    public ResponseEntity<?> createBooking(
             @AuthenticationPrincipal UserPrincipal principal,
             @Valid @RequestBody BookingRequest request) {
+        if (!"CUSTOMER".equals(principal.getRole())) {
+            return ResponseEntity.badRequest().body("Admin không thể đặt vé");
+        }
         return ResponseEntity.ok(bookingService.createBooking(principal, request));
     }
 
     @GetMapping
-    public ResponseEntity<Page<BookingResponse>> getUserBookings(
+    public ResponseEntity<?> getUserBookings(
             @AuthenticationPrincipal UserPrincipal principal,
             Pageable pageable) {
+        if (!"CUSTOMER".equals(principal.getRole())) {
+            return ResponseEntity.badRequest().body("Admin không thể xem lịch sử đặt vé");
+        }
         return ResponseEntity.ok(bookingService.getUserBookings(principal, pageable));
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<BookingResponse> getBookingDetail(
+    public ResponseEntity<?> getBookingDetail(
             @PathVariable UUID id,
             @AuthenticationPrincipal UserPrincipal principal) {
+        if (!"CUSTOMER".equals(principal.getRole())) {
+            return ResponseEntity.badRequest().body("Admin không thể xem chi tiết vé");
+        }
         return ResponseEntity.ok(bookingService.getBookingDetail(id, principal));
     }
 
     @PutMapping("/{id}/cancel")
-    public ResponseEntity<Map<String, String>> cancelBooking(
+    public ResponseEntity<?> cancelBooking(
             @PathVariable UUID id,
             @AuthenticationPrincipal UserPrincipal principal) {
+        if (!"CUSTOMER".equals(principal.getRole())) {
+            return ResponseEntity.badRequest().body("Admin không thể hủy vé");
+        }
         bookingService.cancelBooking(id, principal);
         return ResponseEntity.ok(Map.of("message", "Hủy vé thành công, tiền sẽ được hoàn lại"));
     }

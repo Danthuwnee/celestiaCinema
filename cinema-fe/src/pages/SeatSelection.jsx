@@ -17,6 +17,11 @@ function hexToRgba(hex, alpha) {
   return `rgba(${r}, ${g}, ${b}, ${alpha})`
 }
 
+function parseAisleColumns(val) {
+  if (!val || val.trim() === '') return []
+  return val.split(',').map(s => parseInt(s.trim())).filter(n => !isNaN(n))
+}
+
 export default function SeatSelection() {
   const { showtimeId } = useParams()
   const navigate = useNavigate()
@@ -51,6 +56,10 @@ export default function SeatSelection() {
 
   const toggleSeat = useCallback((seat) => {
     if (!user) return navigate('/login')
+    if (user.role === 'ADMIN') {
+      alert('Tài khoản admin không thể đặt vé')
+      return
+    }
     setSelectedSeats(prev =>
       prev.some(s => s.seatId === seat.seatId)
         ? prev.filter(s => s.seatId !== seat.seatId)
@@ -60,6 +69,10 @@ export default function SeatSelection() {
 
   const toggleCouplePair = useCallback((first, second) => {
     if (!user) return navigate('/login')
+    if (user.role === 'ADMIN') {
+      alert('Tài khoản admin không thể đặt vé')
+      return
+    }
     const pair = second ? [first, second] : [first]
     setSelectedSeats(prev => {
       const hasAny = pair.some(s => prev.some(p => p.seatId === s.seatId))
@@ -72,6 +85,10 @@ export default function SeatSelection() {
 
   const handleContinue = async () => {
     if (!user) return navigate('/login')
+    if (user.role === 'ADMIN') {
+      alert('Tài khoản admin không thể đặt vé')
+      return
+    }
     setLocking(true)
     try {
       await bookingApi.lockSeats({ showtimeId, seatIds: selectedSeats.map(s => s.seatId), sessionId: user.userId })
@@ -99,6 +116,11 @@ export default function SeatSelection() {
   })
   const seatTypes = [...seatTypeMap.values()]
 
+  const cols = Math.max(...seats.map(s => s.seatNumber), 0)
+  const aisleAfterColumns = seats[0]?.aisleAfterColumns || ''
+  const aisleCols = parseAisleColumns(aisleAfterColumns)
+  const innerAisleCols = aisleCols.filter(n => n > 0 && n < cols)
+
   return (
     <div className="max-w-7xl mx-auto px-4 py-8">
       <button onClick={() => navigate(-1)} className="text-text-muted hover:text-white transition-colors mb-6 flex items-center gap-1">
@@ -121,6 +143,27 @@ export default function SeatSelection() {
           <div className="w-3/4 h-1 bg-gradient-to-r from-transparent via-galaxy-purple to-transparent mx-auto rounded-full" />
           <div className="w-3/4 h-8 bg-gradient-to-b from-galaxy-purple/20 to-transparent mx-auto rounded-b-full -mt-1" />
           <p className="text-center text-xs text-text-muted mt-1">Màn hình</p>
+        </div>
+
+        {/* EXIT row */}
+        <div className="flex items-center justify-center gap-1 mb-2">
+          <span className="w-5 text-right text-xs text-text-muted mr-1" />
+          <div className="w-5 shrink-0 flex items-center justify-center">
+            <span className="text-red-400 font-bold text-[7px] -rotate-90 whitespace-nowrap">EXIT</span>
+          </div>
+          <div className="flex items-center gap-1">
+            {Array.from({ length: cols }, (_, ci) => {
+              const colNum = ci + 1
+              return (
+                <div key={colNum}
+                  className={innerAisleCols.includes(colNum) ? 'w-3 shrink-0' : 'w-8 md:w-10 shrink-0'} />
+              )
+            })}
+          </div>
+          <div className="w-5 shrink-0 flex items-center justify-center">
+            <span className="text-red-400 font-bold text-[7px] -rotate-90 whitespace-nowrap">EXIT</span>
+          </div>
+          <span className="w-5 text-left text-xs text-text-muted ml-1" />
         </div>
 
         {/* Seat grid */}
@@ -198,7 +241,19 @@ export default function SeatSelection() {
                     )
                   })
                 ) : (
-                  rowSeats.map(seat => {
+                  Array.from({ length: cols }, (_, ci) => {
+                    const colNum = ci + 1
+                    if (innerAisleCols.includes(colNum)) {
+                      return (
+                        <div key={`aisle-${colNum}`} className="w-3 shrink-0 flex items-center justify-center">
+                          <span className="text-[6px] text-text-muted leading-none">║</span>
+                        </div>
+                      )
+                    }
+                    const seat = rowSeats.find(s => s.seatNumber === colNum)
+                    if (!seat) {
+                      return <div key={`empty-${colNum}`} className="w-8 md:w-10 shrink-0" />
+                    }
                     const color = seat.colorHex || '#4CAF50'
                     const isSelected = selectedSeats.some(s => s.seatId === seat.seatId)
                     const isLocked = seat.status === 'LOCKED'

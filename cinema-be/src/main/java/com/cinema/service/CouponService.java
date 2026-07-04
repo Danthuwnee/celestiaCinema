@@ -2,6 +2,8 @@ package com.cinema.service;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.util.List;
+import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
 
@@ -18,6 +20,17 @@ import lombok.RequiredArgsConstructor;
 public class CouponService {
 
     private final CouponRepository couponRepository;
+
+    public List<CouponResponse> getActiveCoupons() {
+        return couponRepository.findAllActiveCoupons().stream()
+                .map(c -> CouponResponse.builder()
+                        .code(c.getCode())
+                        .discountType(c.getDiscountType().name())
+                        .discountValue(c.getDiscountValue())
+                        .minOrderValue(c.getMinOrderValue())
+                        .build())
+                .collect(Collectors.toList());
+    }
 
     public CouponResponse applyCoupon(String code, BigDecimal orderAmount) {
         if (code == null || orderAmount == null) {

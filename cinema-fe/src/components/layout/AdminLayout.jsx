@@ -135,7 +135,7 @@ export default function AdminLayout() {
       </motion.aside>
 
       {/* Main */}
-      <main className="flex-1 relative z-10 overflow-y-auto">
+      <main className="flex-1 overflow-y-auto">
         <div className="p-6 max-w-7xl mx-auto">
           <Outlet />
         </div>

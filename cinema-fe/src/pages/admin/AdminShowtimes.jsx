@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { motion } from 'framer-motion'
 import { Clock, XCircle, Plus, ChevronLeft, ChevronRight, Trash2 } from 'lucide-react'
@@ -13,8 +13,33 @@ export default function AdminShowtimes() {
   const [currentPage, setCurrentPage] = useState(0)
   const [totalPages, setTotalPages] = useState(0)
   const pageSize = 12
-  const [form, setForm] = useState({ movieId: '', roomId: '', startTime: '', basePrice: 75000 })
+  const [form, setForm] = useState({ movieId: '', roomId: '', date: '', basePrice: 75000 })
   const [selectedIds, setSelectedIds] = useState(new Set())
+  const [slots, setSlots] = useState([])
+  const [loadingSlots, setLoadingSlots] = useState(false)
+  const [selectedTimes, setSelectedTimes] = useState([])
+
+  useEffect(() => {
+    if (!form.movieId || !form.roomId || !form.date) {
+      setSlots([])
+      setSelectedTimes([])
+      return
+    }
+    const fetchSlots = async () => {
+      setLoadingSlots(true)
+      try {
+        const res = await adminApi.getShowtimeSlots({ movieId: form.movieId, roomId: form.roomId, date: form.date })
+        setSlots(res.data.slots || [])
+        setSelectedTimes([])
+      } catch (err) {
+        console.error('Failed to load slots:', err.response?.data || err)
+        setSlots([])
+      } finally {
+        setLoadingSlots(false)
+      }
+    }
+    fetchSlots()
+  }, [form.movieId, form.roomId, form.date])
 
   const { data, isLoading } = useQuery({
     queryKey: ['admin', 'showtimes', currentPage],
@@ -37,6 +62,28 @@ export default function AdminShowtimes() {
   const showtimes = data?.content || data || []
   const movies = moviesData || []
   const rooms = (roomsData || []).filter(r => r.status === 'ACTIVE')
+
+  const duration = movies.find(m => m.movieId === form.movieId)?.duration || 120
+
+  const conflictSet = useMemo(() => {
+    const conflicts = new Set()
+    if (selectedTimes.length === 0 || slots.length === 0) return conflicts
+    const totalMin = duration + 10
+    const toMin = t => { const [h, m] = t.split(':'); return +h * 60 + +m }
+    for (const t of selectedTimes) {
+      const tStart = toMin(t)
+      const tEnd = tStart + totalMin
+      for (const slot of slots) {
+        if (selectedTimes.includes(slot.time)) continue
+        const sStart = toMin(slot.time)
+        const sEnd = sStart + totalMin
+        if (sStart < tEnd && sEnd > tStart) {
+          conflicts.add(slot.time)
+        }
+      }
+    }
+    return conflicts
+  }, [selectedTimes, slots, duration])
 
   const cancelableIds = showtimes.filter(st => st.status !== 'CANCELLED').map(st => st.showtimeId)
   const allSelected = cancelableIds.length > 0 && cancelableIds.every(id => selectedIds.has(id))
@@ -66,28 +113,23 @@ export default function AdminShowtimes() {
 
   const handleSubmit = async (e) => {
     e.preventDefault()
+    if (selectedTimes.length === 0) {
+      alert('Vui lòng chọn ít nhất 1 khung giờ')
+      return
+    }
     try {
-      if (new Date(form.startTime) < new Date()) {
-        alert('Không thể thêm suất chiếu vào thời gian đã qua')
-        return
-      }
-      const movie = movies.find(m => m.movieId === form.movieId)
-      const duration = movie?.duration || 120
-      const start = new Date(form.startTime)
-      const end = new Date(start.getTime() + (duration + 10) * 60000)
-      const pad2 = (n) => String(n).padStart(2, '0')
-      const endTime = `${end.getFullYear()}-${pad2(end.getMonth() + 1)}-${pad2(end.getDate())}T${pad2(end.getHours())}:${pad2(end.getMinutes())}`
-
-      await adminApi.createShowtime({
-        movie: { movieId: form.movieId },
-        room: { roomId: form.roomId },
-        startTime: form.startTime,
-        endTime,
+      const startTimes = selectedTimes.map(t => `${form.date}T${t}:00`)
+      await adminApi.batchCreateShowtimes({
+        movieId: form.movieId,
+        roomId: form.roomId,
         basePrice: Number(form.basePrice),
+        startTimes,
       })
       queryClient.invalidateQueries({ queryKey: ['admin', 'showtimes'] })
       setShowForm(false)
-      setForm({ movieId: '', roomId: '', startTime: '', basePrice: 75000 })
+      setForm({ movieId: '', roomId: '', date: '', basePrice: 75000 })
+      setSelectedTimes([])
+      setSlots([])
     } catch (err) {
       alert(err.response?.data || 'Có lỗi xảy ra khi tạo suất chiếu')
     }
@@ -108,8 +150,8 @@ export default function AdminShowtimes() {
         <Button onClick={() => setShowForm(!showForm)} className="flex items-center gap-2"><Plus size={16} /> Thêm suất chiếu</Button>
       </div>
 
-      <Modal isOpen={showForm} onClose={() => setShowForm(false)} title="Thêm suất chiếu">
-        <form onSubmit={handleSubmit} className="space-y-3">
+      <Modal isOpen={showForm} onClose={() => { setShowForm(false); setSlots([]); setSelectedTimes([]) }} title="Thêm suất chiếu" className="max-w-xl">
+        <form onSubmit={handleSubmit} noValidate className="space-y-3">
           <div>
             <label className="text-sm text-text-secondary">Phim</label>
             <select value={form.movieId} onChange={(e) => setForm(p => ({ ...p, movieId: e.target.value }))} className="input-field mt-1 bg-space-dark" style={{ colorScheme: 'dark' }} required>
@@ -125,29 +167,72 @@ export default function AdminShowtimes() {
             </select>
           </div>
           <div>
-            <label className="text-sm text-text-secondary">Thời gian bắt đầu</label>
-            <input type="datetime-local" value={form.startTime} onChange={(e) => setForm(p => ({ ...p, startTime: e.target.value }))} className="input-field mt-1" required />
+            <label className="text-sm text-text-secondary">Ngày chiếu</label>
+            <input type="date" value={form.date} min={new Date().toISOString().split('T')[0]} onChange={(e) => setForm(p => ({ ...p, date: e.target.value }))} className="input-field mt-1" required />
           </div>
-          {form.movieId && form.startTime && (
-            <div>
-              <label className="text-sm text-text-secondary">Thời gian kết thúc (tự động)</label>
-              <input type="datetime-local"
-                value={(() => {
-                  const movie = movies.find(m => m.movieId === form.movieId)
-                  const duration = movie?.duration || 120
-                  const start = new Date(form.startTime)
-                  const end = new Date(start.getTime() + (duration + 10) * 60000)
-                  const pad2 = (n) => String(n).padStart(2, '0')
-                  return `${end.getFullYear()}-${pad2(end.getMonth() + 1)}-${pad2(end.getDate())}T${pad2(end.getHours())}:${pad2(end.getMinutes())}`
-                })()}
-                className="input-field mt-1 opacity-60" disabled />
-            </div>
-          )}
           <div>
             <label className="text-sm text-text-secondary">Giá vé (VNĐ)</label>
             <input type="number" value={form.basePrice} onChange={(e) => setForm(p => ({ ...p, basePrice: e.target.value }))} className="input-field mt-1" min={0} required />
           </div>
-          <Button type="submit" className="w-full">Lưu</Button>
+
+          {loadingSlots && (
+            <div className="text-xs text-text-muted text-center py-4">Đang tải khung giờ...</div>
+          )}
+
+          {slots.length > 0 && !loadingSlots && (
+            <div>
+              <label className="text-sm text-text-secondary mb-2 block">Khung giờ — {selectedTimes.length} đã chọn</label>
+              <div className="flex flex-wrap gap-2 max-h-48 overflow-y-auto p-1">
+                {slots.map(slot => {
+                  const isConflict = conflictSet.has(slot.time)
+                  const disabled = !slot.available || isConflict
+                  const reason = isConflict
+                    ? 'Trùng với suất đã chọn'
+                    : slot.conflictReason || slot.time
+                  return (
+                    <button
+                      key={slot.time}
+                      type="button"
+                      onClick={() => {
+                        if (disabled) return
+                        setSelectedTimes(prev =>
+                          prev.includes(slot.time)
+                            ? prev.filter(t => t !== slot.time)
+                            : [...prev, slot.time]
+                        )
+                      }}
+                      disabled={disabled}
+                      title={reason}
+                      className={`px-3 py-2 rounded-lg text-xs font-medium border transition-all shrink-0 ${
+                        disabled
+                          ? 'bg-gray-500/10 text-gray-500 border-gray-500/20 cursor-not-allowed line-through'
+                          : selectedTimes.includes(slot.time)
+                            ? 'bg-galaxy-cyan text-white border-galaxy-cyan'
+                            : 'bg-green-500/10 text-green-400 border-green-500/30 hover:bg-green-500/20 cursor-pointer'
+                      }`}
+                    >
+                      {slot.time}
+                    </button>
+                  )
+                })}
+              </div>
+              {selectedTimes.length > 0 && (
+                <p className="text-xs text-text-muted mt-1">
+                  Suất: {selectedTimes.sort().join(', ')}
+                </p>
+              )}
+            </div>
+          )}
+
+          {!form.movieId || !form.roomId || !form.date ? (
+            <p className="text-xs text-text-muted text-center py-4">Vui lòng chọn phim, phòng và ngày chiếu</p>
+          ) : slots.length === 0 && !loadingSlots ? (
+            <p className="text-xs text-text-muted text-center py-4">Không có khung giờ khả dụng</p>
+          ) : null}
+
+          <Button type="submit" className="w-full" disabled={selectedTimes.length === 0}>
+            Tạo {selectedTimes.length > 0 ? selectedTimes.length + ' suất chiếu' : 'suất chiếu'}
+          </Button>
         </form>
       </Modal>
 

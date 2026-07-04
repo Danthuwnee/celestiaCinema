@@ -70,6 +70,7 @@ public class SeatService {
                     .colorHex(seat.getSeatType().getColorHex())
                     .calculatedPrice(calculatedPrice)
                     .status(status)
+                    .aisleAfterColumns(showtime.getRoom().getAisleAfterColumns())
                     .build();
         }).collect(Collectors.toList());
     }

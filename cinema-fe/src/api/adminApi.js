@@ -8,6 +8,7 @@ const adminApi = {
 
   getRooms: () => axiosClient.get('/admin/rooms'),
   getSeatTypes: () => axiosClient.get('/admin/rooms/seat-types'),
+  getRoomSeats: (roomId) => axiosClient.get(`/admin/rooms/${roomId}/seats`),
   createRoom: (data) => axiosClient.post('/admin/rooms', data),
   updateRoom: (id, data) => axiosClient.put(`/admin/rooms/${id}`, data),
   deleteRoom: (id) => axiosClient.delete(`/admin/rooms/${id}`),
@@ -16,6 +17,8 @@ const adminApi = {
   createShowtime: (data) => axiosClient.post('/admin/showtimes', data),
   batchCancelShowtimes: (ids) => axiosClient.post('/admin/showtimes/batch-cancel', ids),
   cancelShowtime: (id) => axiosClient.delete(`/admin/showtimes/${id}`),
+  getShowtimeSlots: (params) => axiosClient.get('/admin/showtimes/slots', { params }),
+  batchCreateShowtimes: (data) => axiosClient.post('/admin/showtimes/batch', data),
 
   getCoupons: (params) => axiosClient.get('/admin/coupons', { params }),
   createCoupon: (data) => axiosClient.post('/admin/coupons', data),

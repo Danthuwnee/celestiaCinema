@@ -115,14 +115,16 @@ export default function Layout() {
                           Admin Dashboard
                         </Link>
                       )}
-                      <Link
-                        to="/bookings"
-                        onClick={() => setProfileOpen(false)}
-                        className="flex items-center gap-3 px-3 py-2 rounded-xl text-sm text-text-secondary hover:text-white hover:bg-white/5 transition-all"
-                      >
-                        <Clock size={16} />
-                        Lịch sử đặt vé
-                      </Link>
+                      {user.role !== 'ADMIN' && (
+                        <Link
+                          to="/bookings"
+                          onClick={() => setProfileOpen(false)}
+                          className="flex items-center gap-3 px-3 py-2 rounded-xl text-sm text-text-secondary hover:text-white hover:bg-white/5 transition-all"
+                        >
+                          <Clock size={16} />
+                          Lịch sử đặt vé
+                        </Link>
+                      )}
                       <Link
                         to="/profile"
                         onClick={() => setProfileOpen(false)}

@@ -52,6 +52,8 @@ public class AdminMovieController {
         if (request.getDescription() != null) existing.setDescription(request.getDescription());
         if (request.getDuration() != null) existing.setDuration(request.getDuration());
         if (request.getLanguage() != null) existing.setLanguage(request.getLanguage());
+        if (request.getDirector() != null) existing.setDirector(request.getDirector());
+        if (request.getActors() != null) existing.setActors(request.getActors());
         if (request.getAgeRating() != null) existing.setAgeRating(request.getAgeRating());
         if (request.getTrailerUrl() != null) existing.setTrailerUrl(request.getTrailerUrl());
         if (request.getPosterUrl() != null) existing.setPosterUrl(request.getPosterUrl());

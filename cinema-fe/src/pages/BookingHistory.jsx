@@ -1,6 +1,9 @@
+import { useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { motion } from 'framer-motion'
 import { Clock, Film, Ticket, ChevronRight, AlertCircle, XCircle } from 'lucide-react'
+import { useAuth } from '../contexts/AuthContext'
 import bookingApi from '../api/bookingApi'
 import Badge from '../components/ui/Badge'
 import Loading from '../components/ui/Loading'
@@ -8,7 +11,16 @@ import Loading from '../components/ui/Loading'
 const statusMap = { PAID: 'Đã thanh toán', PENDING: 'Chờ thanh toán', CANCELLED: 'Đã hủy', REFUNDED: 'Đã hoàn tiền' }
 
 export default function BookingHistory() {
+  const { user } = useAuth()
+  const navigate = useNavigate()
   const queryClient = useQueryClient()
+
+  useEffect(() => {
+    if (user?.role === 'ADMIN') {
+      alert('Admin không thể xem lịch sử đặt vé')
+      navigate('/', { replace: true })
+    }
+  }, [user, navigate])
   const { data, isLoading, error } = useQuery({
     queryKey: ['bookings'],
     queryFn: () => bookingApi.getUserBookings({ page: 0, size: 20 }).then(r => r.data),
@@ -50,7 +62,7 @@ export default function BookingHistory() {
               <div className="flex items-start justify-between">
                 <div className="space-y-1">
                   <h3 className="font-semibold">{booking.movieTitle}</h3>
-                  <p className="text-xs text-text-muted">{new Date(booking.showtimeStart).toLocaleDateString('vi-VN')} — {booking.roomName}</p>
+                  <p className="text-xs text-text-muted">{new Date(booking.showtimeStart).toLocaleDateString('vi-VN')} {new Date(booking.showtimeStart).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })} — {booking.roomName}</p>
                   <p className="text-sm text-text-secondary flex items-center gap-1">
                     <Ticket size={14} /> Ghế: {booking.seatLabels?.join(', ')}
                   </p>
