@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { motion } from 'framer-motion'
 import {
@@ -5,7 +6,7 @@ import {
   TrendingUp, Ticket
 } from 'lucide-react'
 import {
-  BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid,
+  ComposedChart, Bar, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid,
   PieChart, Pie, Cell
 } from 'recharts'
 import adminApi from '../../api/adminApi'
@@ -57,9 +58,35 @@ function StatusBadge({ status }) {
 }
 
 export default function AdminDashboard() {
+  const [period, setPeriod] = useState('7d')
+  const [customStart, setCustomStart] = useState('')
+  const [customEnd, setCustomEnd] = useState('')
+
+  const today = new Date()
+  const fmt = (d) => d.toISOString().split('T')[0]
+
+  let startDate
+  if (period === 'custom' && customStart) {
+    startDate = customStart
+  } else {
+    const d = new Date(today)
+    if (period === '1m') d.setMonth(d.getMonth() - 1)
+    else if (period === '1y') d.setFullYear(d.getFullYear() - 1)
+    else d.setDate(d.getDate() - 7)
+    startDate = fmt(d)
+  }
+  const endDate = customEnd || fmt(today)
+
   const { data: stats, isLoading } = useQuery({
     queryKey: ['admin', 'dashboard'],
     queryFn: () => adminApi.getDashboard().then(r => r.data),
+    refetchInterval: 30000,
+  })
+
+  const { data: revenueData, isLoading: revenueLoading } = useQuery({
+    queryKey: ['admin', 'revenue', period, startDate, endDate],
+    queryFn: () => adminApi.getRevenue(startDate, endDate).then(r => r.data),
+    placeholderData: period === '7d' ? { dailyRevenue: stats?.dailyRevenue || [] } : undefined,
     refetchInterval: 30000,
   })
 
@@ -81,9 +108,26 @@ export default function AdminDashboard() {
     { icon: Clock, label: 'Chờ thanh toán', value: pendingBookings, sub: 'Cần xử lý', color: 'bg-amber-500/20' },
   ]
 
+  const chartData = revenueData?.dailyRevenue || []
   const todayRevenue = dailyRevenue?.length > 0 ? dailyRevenue[dailyRevenue.length - 1]?.revenue || 0 : 0
-  const yesterdayRevenue = dailyRevenue?.length > 1 ? dailyRevenue[dailyRevenue.length - 2]?.revenue || 0 : 0
-  const revenueChange = yesterdayRevenue > 0 ? ((todayRevenue - yesterdayRevenue) / yesterdayRevenue * 100).toFixed(1) : null
+  const periodLabels = { '7d': '7 ngày', '1m': '1 tháng', '1y': '1 năm' }
+  const periodLabel = period === 'custom' ? `${customStart || '...'} → ${customEnd || '...'}` : periodLabels[period] || ''
+
+  const isMonthly = period === '1y' && chartData.length > 0
+  const displayData = isMonthly
+    ? Object.values(
+        chartData.reduce((acc, d) => {
+          const m = d.date.substring(0, 7)
+          if (!acc[m]) acc[m] = { date: m, revenue: 0 }
+          acc[m].revenue += d.revenue
+          return acc
+        }, {})
+      )
+    : chartData
+
+  const lastRevenue = displayData?.length > 0 ? displayData[displayData.length - 1]?.revenue || 0 : 0
+  const prevRevenue = displayData?.length > 1 ? displayData[displayData.length - 2]?.revenue || 0 : 0
+  const revenueChange = prevRevenue > 0 ? ((lastRevenue - prevRevenue) / prevRevenue * 100).toFixed(1) : null
 
   return (
     <div className="space-y-4 md:space-y-6">
@@ -107,30 +151,54 @@ export default function AdminDashboard() {
         {/* Revenue Bar Chart */}
         <div className="col-span-12 xl:col-span-8">
           <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-5 md:p-6 h-full">
-            <div className="flex items-center justify-between mb-5">
-              <div>
-                <h3 className="text-base font-semibold text-white">Doanh thu 7 ngày</h3>
-                <p className="mt-0.5 text-xs text-text-secondary">Biến động doanh thu hàng ngày</p>
+            <div className="flex items-start justify-between mb-5 gap-3">
+              <div className="shrink-0">
+                <h3 className="text-base font-semibold text-white">Doanh thu {periodLabel}</h3>
+                <p className="mt-0.5 text-xs text-text-secondary">Biến động doanh thu</p>
               </div>
-              {revenueChange !== null && (
-                <span className={`inline-flex items-center gap-1 text-xs font-medium px-2.5 py-1 rounded-full ${
-                  revenueChange >= 0 ? 'bg-emerald-500/20 text-emerald-400' : 'bg-red-500/20 text-red-400'
-                }`}>
-                  <TrendingUp size={12} />
-                  {revenueChange >= 0 ? '+' : ''}{revenueChange}%
-                </span>
-              )}
+              <div className="flex items-center gap-2 flex-wrap justify-end">
+                <div className="flex bg-white/[0.03] rounded-xl p-0.5 border border-white/10">
+                  {['7d', '1m', '1y'].map(p => (
+                    <button key={p} onClick={() => { setPeriod(p); setCustomStart(''); setCustomEnd('') }}
+                      className={`px-3 py-1.5 text-xs rounded-lg transition-colors font-medium ${period === p ? 'bg-[#6C3BFF] text-white' : 'text-text-muted hover:text-white'}`}>
+                      {periodLabels[p]}
+                    </button>
+                  ))}
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <input type="date" value={customStart} onChange={(e) => { setCustomStart(e.target.value); setPeriod('custom') }}
+                    max={customEnd || fmt(today)} className="bg-white/[0.03] border border-white/10 rounded-lg px-2 py-1.5 text-xs text-white w-[130px] [color-scheme:dark]" />
+                  <span className="text-text-muted text-xs">→</span>
+                  <input type="date" value={customEnd} onChange={(e) => { setCustomEnd(e.target.value); setPeriod('custom') }}
+                    min={customStart} max={fmt(today)} className="bg-white/[0.03] border border-white/10 rounded-lg px-2 py-1.5 text-xs text-white w-[130px] [color-scheme:dark]" />
+                </div>
+                {revenueChange !== null && period !== 'custom' && (
+                  <span className={`inline-flex items-center gap-1 text-xs font-medium px-2.5 py-1 rounded-full shrink-0 ${
+                    revenueChange >= 0 ? 'bg-emerald-500/20 text-emerald-400' : 'bg-red-500/20 text-red-400'
+                  }`}>
+                    <TrendingUp size={12} />
+                    {revenueChange >= 0 ? '+' : ''}{revenueChange}%
+                  </span>
+                )}
+              </div>
             </div>
-            {dailyRevenue?.length > 0 ? (
+            {revenueLoading && chartData.length === 0 ? (
+              <div className="flex items-center justify-center h-[280px] text-text-muted text-sm">Đang tải...</div>
+            ) : chartData?.length > 0 ? (
               <ResponsiveContainer width="100%" height={280}>
-                <BarChart data={dailyRevenue} margin={{ top: 5, right: 10, left: -10, bottom: 0 }}>
+                <ComposedChart data={displayData} margin={{ top: 5, right: 10, left: -10, bottom: 0 }}>
                   <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" vertical={false} />
                   <XAxis
                     dataKey="date"
                     tick={{ fill: '#7A859F', fontSize: 11 }}
                     axisLine={false}
                     tickLine={false}
+                    interval={isMonthly ? 0 : period === '7d' ? 0 : 'preserveStart'}
                     tickFormatter={(v) => {
+                      if (isMonthly) {
+                        const d = new Date(v + '-02')
+                        return `Th${d.getMonth() + 1}`
+                      }
                       const d = new Date(v)
                       return `${d.getDate()}/${d.getMonth() + 1}`
                     }}
@@ -149,14 +217,19 @@ export default function AdminDashboard() {
                       color: '#fff',
                       fontSize: 13,
                     }}
-                    formatter={(value) => [`${value?.toLocaleString()}₫`, 'Doanh thu']}
+                    formatter={(value, name) => [`${value?.toLocaleString()}₫`, name === 'revenue' ? 'Doanh thu' : name]}
                     labelFormatter={(v) => {
+                      if (isMonthly) {
+                        const d = new Date(v + '-02')
+                        return `Tháng ${d.getMonth() + 1}/${d.getFullYear()}`
+                      }
                       const d = new Date(v)
                       return d.toLocaleDateString('vi-VN', { weekday: 'long', day: 'numeric', month: 'numeric' })
                     }}
                   />
-                  <Bar dataKey="revenue" fill="#6C3BFF" radius={[6, 6, 0, 0]} maxBarSize={40} />
-                </BarChart>
+                  <Bar dataKey="revenue" fill="#6C3BFF" radius={[6, 6, 0, 0]} maxBarSize={isMonthly ? 60 : 40} />
+                  <Line type="monotone" dataKey="revenue" stroke="#00D4FF" strokeWidth={2} dot={false} />
+                </ComposedChart>
               </ResponsiveContainer>
             ) : (
               <div className="flex items-center justify-center h-[280px] text-text-muted text-sm">Chưa có dữ liệu</div>

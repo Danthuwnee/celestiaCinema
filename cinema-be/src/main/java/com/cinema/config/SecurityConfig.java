@@ -40,7 +40,8 @@ public class SecurityConfig {
                                   "/api/auth/forgot-password", "/api/auth/reset-password",
                                   "/api/auth/oauth2/**").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/movies/**", "/api/genres/**", "/api/showtimes/**",
-                                  "/api/combos/**", "/api/seats/**").permitAll()
+                                  "/api/combos/**", "/api/seats/**",
+                                  "/api/coupons/active").permitAll()
                 .requestMatchers("/ws/**").permitAll()
                 .requestMatchers("/api/admin/**").hasRole("ADMIN")
                 .anyRequest().authenticated()

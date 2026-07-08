@@ -127,7 +127,7 @@ export default function AdminCoupons() {
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div><label className="text-sm text-text-secondary">Đơn tối thiểu</label><input type="number" value={form.minOrderValue} onChange={(e) => setForm(p => ({ ...p, minOrderValue: +e.target.value }))} className="input-field mt-1" /></div>
-            <div><label className="text-sm text-text-secondary">Hết hạn</label><input type="date" value={form.expiredAt} onChange={(e) => setForm(p => ({ ...p, expiredAt: e.target.value }))} className="input-field mt-1" /></div>
+            <div><label className="text-sm text-text-secondary">Hết hạn</label><input type="date" value={form.expiredAt} onChange={(e) => setForm(p => ({ ...p, expiredAt: e.target.value }))} className="input-field mt-1" min={new Date().toISOString().split('T')[0]} /></div>
           </div>
           <Button type="submit" className="w-full">{editingCoupon ? 'Cập nhật' : 'Lưu'}</Button>
         </form>

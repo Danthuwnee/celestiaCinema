@@ -1,8 +1,9 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useMemo } from 'react'
 import { Link, useSearchParams, useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Search, Play, Clock, Star, Calendar, ChevronLeft, ChevronRight, Tag } from 'lucide-react'
 import movieApi from '../api/movieApi'
+import couponApi from '../api/couponApi'
 import Badge from '../components/ui/Badge'
 import Loading from '../components/ui/Loading'
 
@@ -30,6 +31,7 @@ export default function Home() {
   const [scheduleLoading, setScheduleLoading] = useState(false)
   const [scheduleError, setScheduleError] = useState('')
   const [dateStartIndex, setDateStartIndex] = useState(0)
+  const [activeCoupons, setActiveCoupons] = useState([])
   const scrollRefs = useRef({})
   const pageSize = 12
 
@@ -76,13 +78,27 @@ export default function Home() {
       .finally(() => setLoading(false))
   }, [activeTab, currentPage, debouncedQuery, selectedGenres])
 
+  const heroSlides = useMemo(() => {
+    if (activeTab === 'schedule') return []
+    const items = []
+    const cp = [...activeCoupons]
+    for (let i = 0; i < movies.length; i++) {
+      items.push({ type: 'movie', data: movies[i] })
+      if (i < cp.length) items.push({ type: 'coupon', data: cp[i] })
+    }
+    for (let i = movies.length; i < cp.length; i++) {
+      items.push({ type: 'coupon', data: cp[i] })
+    }
+    return items
+  }, [movies, activeCoupons, activeTab])
+
   useEffect(() => {
-    if (movies.length <= 1) return
+    if (heroSlides.length <= 1) return
     const timer = setInterval(() => {
-      setHeroIndex(prev => (prev + 1) % movies.length)
+      setHeroIndex(prev => (prev + 1) % heroSlides.length)
     }, 5000)
     return () => clearInterval(timer)
-  }, [movies])
+  }, [heroSlides])
 
   useEffect(() => {
     if (activeTab !== 'schedule') return
@@ -106,6 +122,12 @@ export default function Home() {
       .finally(() => setScheduleLoading(false))
   }, [selectedDate])
 
+  useEffect(() => {
+    couponApi.getActiveCoupons()
+      .then(r => { setActiveCoupons(r.data || []); setHeroIndex(0) })
+      .catch(() => {})
+  }, [])
+
   const weekdays = ['Chủ nhật', 'Thứ 2', 'Thứ 3', 'Thứ 4', 'Thứ 5', 'Thứ 6', 'Thứ 7']
   const months = ['tháng 1','tháng 2','tháng 3','tháng 4','tháng 5','tháng 6','tháng 7','tháng 8','tháng 9','tháng 10','tháng 11','tháng 12']
 
@@ -124,15 +146,17 @@ export default function Home() {
   return (
     <div>
       {/* Hero Section */}
-      {activeTab !== 'schedule' && movies.length > 0 && movies[heroIndex] && (() => {
-        const h = movies[heroIndex]
+      {activeTab !== 'schedule' && heroSlides.length > 0 && heroSlides[heroIndex] && (() => {
+        const slide = heroSlides[heroIndex]
         return (
         <section className="relative h-[55vh] min-h-[380px] overflow-hidden">
+          {slide.type === 'movie' && (
+            <>
           <div className="absolute inset-0 bg-gradient-to-b from-space-dark/40 via-space-dark/70 to-space-dark" />
           <div className="absolute inset-0 bg-galaxy-hero" />
           <div
             className="absolute inset-0 bg-cover bg-center scale-110"
-            style={{ backgroundImage: `url(${h.posterUrl})`, filter: 'blur(8px) brightness(0.3)' }}
+            style={{ backgroundImage: `url(${slide.data.posterUrl})`, filter: 'blur(8px) brightness(0.3)' }}
           />
           <div className="relative z-10 h-full max-w-7xl mx-auto px-4 flex items-center">
             <motion.div
@@ -141,22 +165,22 @@ export default function Home() {
               className="max-w-xl"
             >
               <div className="flex items-center gap-2 mb-2">
-                <Badge variant={h.ageRating}>{h.ageRating}</Badge>
+                <Badge variant={slide.data.ageRating}>{slide.data.ageRating}</Badge>
                 <span className="text-text-muted text-sm flex items-center gap-1">
-                  <Clock size={14} /> {h.duration} phút
+                  <Clock size={14} /> {slide.data.duration} phút
                 </span>
               </div>
-              <h1 className="text-3xl md:text-5xl font-bold mb-3">{h.title}</h1>
-              <p className="text-text-secondary text-base mb-4 line-clamp-2">{h.description}</p>
+              <h1 className="text-3xl md:text-5xl font-bold mb-3">{slide.data.title}</h1>
+              <p className="text-text-secondary text-base mb-4 line-clamp-2">{slide.data.description}</p>
               <div className="flex items-center gap-3">
                 <Link
-                  to={`/movies/${h.movieId || h.id}`}
+                  to={`/movies/${slide.data.movieId || slide.data.id}`}
                   className="btn-primary flex items-center gap-2 py-2.5 px-6"
                 >
                   <Play size={18} /> Đặt Vé Ngay
                 </Link>
                 <Link
-                  to={`/movies/${h.movieId || h.id}`}
+                  to={`/movies/${slide.data.movieId || slide.data.id}`}
                   className="btn-secondary flex items-center gap-2 py-2.5 px-6"
                 >
                   Xem Trailer
@@ -164,9 +188,42 @@ export default function Home() {
               </div>
             </motion.div>
           </div>
-          {movies.length > 1 && (
+            </>
+          )}
+          {slide.type === 'coupon' && (
+            <>
+              <div className="absolute inset-0 bg-gradient-to-br from-galaxy-purple/60 via-galaxy-pink/30 to-galaxy-cyan/20" />
+              <div className="absolute inset-0 bg-galaxy-hero opacity-30" />
+              <div className="relative z-10 h-full max-w-7xl mx-auto px-4 flex items-center justify-center">
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.9 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  className="text-center max-w-lg"
+                >
+                  <div className="w-16 h-16 rounded-full bg-button-glow flex items-center justify-center mx-auto mb-4">
+                    <Tag size={28} className="text-white" />
+                  </div>
+                  <p className="text-galaxy-cyan text-sm font-semibold tracking-widest mb-2">KHUYẾN MÃI ĐẶC BIỆT</p>
+                  <p className="text-[44px] md:text-[56px] font-bold galaxy-text-gradient leading-none mb-3">{slide.data.code}</p>
+                  <p className="text-white text-xl font-semibold mb-1">
+                    {slide.data.discountType === 'PERCENTAGE' ? `Giảm ${slide.data.discountValue}%` : `Giảm ${slide.data.discountValue?.toLocaleString()}₫`}
+                  </p>
+                  {slide.data.minOrderValue > 0 && (
+                    <p className="text-text-muted text-sm mb-4">Cho đơn từ {slide.data.minOrderValue?.toLocaleString()}₫</p>
+                  )}
+                  <Link
+                    to="/?tab=schedule"
+                    className="btn-primary inline-flex items-center gap-2 py-2.5 px-8"
+                  >
+                    Đặt ngay
+                  </Link>
+                </motion.div>
+              </div>
+            </>
+          )}
+          {heroSlides.length > 1 && (
             <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-20 flex gap-2">
-              {movies.map((_, i) => (
+              {heroSlides.map((_, i) => (
                 <button
                   key={i}
                   onClick={() => setHeroIndex(i)}
@@ -222,21 +279,7 @@ export default function Home() {
 
         {activeTab === 'schedule' ? (
           <>
-            {/* Promo banner */}
-            <div className="relative overflow-hidden rounded-2xl mb-4 bg-gradient-to-r from-galaxy-purple/30 via-galaxy-pink/20 to-galaxy-cyan/10 border border-white/10 p-4">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full bg-button-glow flex items-center justify-center shrink-0">
-                  <Tag size={18} className="text-white" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="font-semibold text-sm">Giảm giá đặc biệt!</p>
-                  <p className="text-xs text-text-muted">
-                    Sử dụng mã <span className="font-bold galaxy-text-gradient">GG7</span> để được giảm ngay 20% cho đơn hàng đầu tiên
-                  </p>
-                </div>
-                <Link to="/admin/coupons" className="btn-primary text-xs py-1.5 px-4 shrink-0">Đặt ngay</Link>
-              </div>
-            </div>
+
             {/* Date selector */}
             <div className="flex items-center gap-1.5 mb-1">
               <button

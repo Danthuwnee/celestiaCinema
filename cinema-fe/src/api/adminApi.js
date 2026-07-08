@@ -31,6 +31,7 @@ const adminApi = {
   deleteCombo: (id) => axiosClient.delete(`/admin/combos/${id}`),
 
   getDashboard: () => axiosClient.get('/admin/statistics/dashboard'),
+  getRevenue: (startDate, endDate) => axiosClient.get('/admin/statistics/revenue', { params: { startDate, endDate } }),
 }
 
 export default adminApi

@@ -101,12 +101,18 @@ public class StatisticsService {
         double totalRevenue = bookingRepository.revenueBetween(start, end);
         List<Object[]> dailyData = bookingRepository.dailyRevenue(start, end);
 
-        List<Map<String, Object>> dailyRevenue = dailyData.stream().map(row -> {
+        Map<String, Double> revenueMap = dailyData.stream().collect(Collectors.toMap(
+                row -> row[0].toString(),
+                row -> ((Number) row[1]).doubleValue()
+        ));
+
+        List<Map<String, Object>> dailyRevenue = new ArrayList<>();
+        for (LocalDate date = startDate; !date.isAfter(endDate); date = date.plusDays(1)) {
             Map<String, Object> item = new LinkedHashMap<>();
-            item.put("date", row[0].toString());
-            item.put("revenue", ((Number) row[1]).doubleValue());
-            return item;
-        }).collect(Collectors.toList());
+            item.put("date", date.toString());
+            item.put("revenue", revenueMap.getOrDefault(date.toString(), 0.0));
+            dailyRevenue.add(item);
+        }
 
         Map<String, Object> report = new LinkedHashMap<>();
         report.put("startDate", startDate);
