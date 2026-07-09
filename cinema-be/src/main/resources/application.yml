@@ -90,7 +90,7 @@ app:
     seat-lock-ttl: 900
     max-seats-per-booking: 8
   cors:
-    allowed-origins: ${APP_CORS_ALLOWED_ORIGINS:http://localhost:5173,http://localhost:3000}
+    allowed-origins: ${APP_CORS_ALLOWED_ORIGINS:http://localhost:5173,http://localhost:3000,https://celestia-cinema.vercel.app}
 
 logging:
   level:
