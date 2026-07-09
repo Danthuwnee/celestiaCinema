@@ -1,8 +1,8 @@
 spring:
   datasource:
-    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/CinemaDB}
-    username: ${SPRING_DATASOURCE_USERNAME:postgres}
-    password: ${SPRING_DATASOURCE_PASSWORD:20040608Tm.n}
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://ep-green-fog-aofszejo-pooler.c-2.ap-southeast-1.aws.neon.tech/neondb?sslmode=require}
+    username: ${SPRING_DATASOURCE_USERNAME:neondb_owner}
+    password: ${SPRING_DATASOURCE_PASSWORD:npg_lJa2hgEo1yrw}
     driver-class-name: org.postgresql.Driver
     hikari:
       maximum-pool-size: 20
