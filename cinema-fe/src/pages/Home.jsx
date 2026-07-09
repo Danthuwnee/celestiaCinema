@@ -32,7 +32,7 @@ export default function Home() {
   const [scheduleError, setScheduleError] = useState('')
   const [dateStartIndex, setDateStartIndex] = useState(0)
   const [activeCoupons, setActiveCoupons] = useState([])
-  const scrollRefs = useRef({})
+  const couponScrollRef = useRef(null)
   const pageSize = 12
 
   useEffect(() => {
@@ -80,17 +80,8 @@ export default function Home() {
 
   const heroSlides = useMemo(() => {
     if (activeTab === 'schedule') return []
-    const items = []
-    const cp = [...activeCoupons]
-    for (let i = 0; i < movies.length; i++) {
-      items.push({ type: 'movie', data: movies[i] })
-      if (i < cp.length) items.push({ type: 'coupon', data: cp[i] })
-    }
-    for (let i = movies.length; i < cp.length; i++) {
-      items.push({ type: 'coupon', data: cp[i] })
-    }
-    return items
-  }, [movies, activeCoupons, activeTab])
+    return movies.map(m => ({ type: 'movie', data: m }))
+  }, [movies, activeTab])
 
   useEffect(() => {
     if (heroSlides.length <= 1) return
@@ -102,25 +93,18 @@ export default function Home() {
 
   useEffect(() => {
     if (activeTab !== 'schedule') return
-    const today = new Date().toISOString().split('T')[0]
-    setSelectedDate(today)
-    setScheduleLoading(true)
-    setScheduleError('')
-    movieApi.getSchedule(today)
-      .then(r => { setSchedule(r.data || []); setScheduleError('') })
-      .catch(() => { setSchedule([]); setScheduleError('Không thể tải lịch chiếu — thử lại sau') })
-      .finally(() => setScheduleLoading(false))
+    setSelectedDate(new Date().toISOString().split('T')[0])
   }, [activeTab])
 
   useEffect(() => {
-    if (activeTab !== 'schedule' || selectedDate === new Date().toISOString().split('T')[0]) return
+    if (activeTab !== 'schedule') return
     setScheduleLoading(true)
     setScheduleError('')
     movieApi.getSchedule(selectedDate)
       .then(r => { setSchedule(r.data || []); setScheduleError('') })
       .catch(() => { setSchedule([]); setScheduleError('Không thể tải lịch chiếu — thử lại sau') })
       .finally(() => setScheduleLoading(false))
-  }, [selectedDate])
+  }, [activeTab, selectedDate])
 
   useEffect(() => {
     couponApi.getActiveCoupons()
@@ -190,37 +174,7 @@ export default function Home() {
           </div>
             </>
           )}
-          {slide.type === 'coupon' && (
-            <>
-              <div className="absolute inset-0 bg-gradient-to-br from-galaxy-purple/60 via-galaxy-pink/30 to-galaxy-cyan/20" />
-              <div className="absolute inset-0 bg-galaxy-hero opacity-30" />
-              <div className="relative z-10 h-full max-w-7xl mx-auto px-4 flex items-center justify-center">
-                <motion.div
-                  initial={{ opacity: 0, scale: 0.9 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  className="text-center max-w-lg"
-                >
-                  <div className="w-16 h-16 rounded-full bg-button-glow flex items-center justify-center mx-auto mb-4">
-                    <Tag size={28} className="text-white" />
-                  </div>
-                  <p className="text-galaxy-cyan text-sm font-semibold tracking-widest mb-2">KHUYẾN MÃI ĐẶC BIỆT</p>
-                  <p className="text-[44px] md:text-[56px] font-bold galaxy-text-gradient leading-none mb-3">{slide.data.code}</p>
-                  <p className="text-white text-xl font-semibold mb-1">
-                    {slide.data.discountType === 'PERCENTAGE' ? `Giảm ${slide.data.discountValue}%` : `Giảm ${slide.data.discountValue?.toLocaleString()}₫`}
-                  </p>
-                  {slide.data.minOrderValue > 0 && (
-                    <p className="text-text-muted text-sm mb-4">Cho đơn từ {slide.data.minOrderValue?.toLocaleString()}₫</p>
-                  )}
-                  <Link
-                    to="/?tab=schedule"
-                    className="btn-primary inline-flex items-center gap-2 py-2.5 px-8"
-                  >
-                    Đặt ngay
-                  </Link>
-                </motion.div>
-              </div>
-            </>
-          )}
+
           {heroSlides.length > 1 && (
             <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-20 flex gap-2">
               {heroSlides.map((_, i) => (
@@ -329,13 +283,12 @@ export default function Home() {
                 <p className="text-text-muted">Không có suất chiếu trong ngày này</p>
               </div>
             ) : (
-              <div className="space-y-0 mb-8">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8 ml-9">
                 {schedule.map((item, i) => (
                   <div key={item.movieId}>
-                    {i > 0 && <hr className="border-white/10 my-4" />}
-                    <div className="flex gap-4">
+                    <div className="glass-card p-4 flex gap-4">
                       <Link to={`/movies/${item.movieId}`} className="shrink-0">
-                        <div className="w-[65px] h-[95px] rounded-lg overflow-hidden bg-white/5">
+                        <div className="w-[130px] h-[185px] rounded-lg overflow-hidden bg-white/5">
                           <img
                             src={item.posterUrl || '/placeholder.jpg'}
                             alt={item.title}
@@ -346,37 +299,29 @@ export default function Home() {
                       </Link>
                       <div className="flex-1 min-w-0">
                         <Link to={`/movies/${item.movieId}`} className="hover:text-galaxy-cyan transition-colors">
-                          <h3 className="font-semibold text-sm flex items-center gap-2">
+                          <h3 className="font-semibold text-base flex items-center gap-2">
                             {item.title}
                             <Badge variant={item.ageRating}>{item.ageRating}</Badge>
                           </h3>
                         </Link>
-                        <div className="flex items-center gap-2 text-xs text-text-muted mt-0.5">
+                        <div className="flex items-center gap-2 text-sm text-text-muted mt-0.5">
                           <span className="truncate">{item.genres?.map(g => g.name).join(', ')}</span>
                           {item.duration && <><span className="text-white/10">·</span><Clock size={10} className="shrink-0" /> {item.duration} phút</>}
                         </div>
-                        <div className="relative mt-3">
-                          <button onClick={() => { const el = scrollRefs.current[item.movieId]; if (el) el.scrollBy({ left: -120, behavior: 'smooth' }) }} className="absolute left-0 top-1/2 -translate-y-1/2 w-6 h-6 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center z-10 transition-all">
-                            <ChevronLeft size={14} />
-                          </button>
-                          <div ref={el => scrollRefs.current[item.movieId] = el} className="flex gap-2 overflow-x-auto no-scrollbar pb-1 px-7">
-                            {item.showtimes?.map(st => {
-                              const time = new Date(st.startTime)
-                              const timeStr = time.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })
-                              return (
-                                <Link
-                                  key={st.showtimeId}
-                                  to={`/booking/${st.showtimeId}`}
-                                  className="px-3 py-1.5 rounded-lg text-sm font-medium whitespace-nowrap shrink-0 bg-gradient-to-r from-galaxy-purple to-galaxy-pink text-white hover:shadow-lg hover:shadow-galaxy-purple/30 transition-all"
-                                >
-                                  {timeStr}
-                                </Link>
-                              )
-                            })}
-                          </div>
-                          <button onClick={() => { const el = scrollRefs.current[item.movieId]; if (el) el.scrollBy({ left: 120, behavior: 'smooth' }) }} className="absolute right-0 top-1/2 -translate-y-1/2 w-6 h-6 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center z-10 transition-all">
-                            <ChevronRight size={14} />
-                          </button>
+                        <div className="flex gap-2 mt-3 flex-wrap">
+                          {item.showtimes?.map(st => {
+                            const time = new Date(st.startTime)
+                            const timeStr = time.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })
+                            return (
+                              <Link
+                                key={st.showtimeId}
+                                to={`/booking/${st.showtimeId}`}
+                                className="px-3 py-1.5 rounded-lg text-sm font-medium whitespace-nowrap bg-gradient-to-r from-galaxy-purple to-galaxy-pink text-white hover:shadow-lg hover:shadow-galaxy-purple/30 transition-all"
+                              >
+                                {timeStr}
+                              </Link>
+                            )
+                          })}
                         </div>
                       </div>
                     </div>
@@ -387,6 +332,64 @@ export default function Home() {
           </>
         ) : (
           <>
+            {/* Coupons section */}
+            {activeCoupons.length > 0 && (
+              <div className="mb-6">
+                <div className="flex items-center gap-2 mb-3">
+                  <Tag size={16} className="text-galaxy-cyan" />
+                  <h2 className="text-sm font-semibold text-white">Khuyến mãi đặc biệt</h2>
+                </div>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => { if (couponScrollRef.current) couponScrollRef.current.scrollBy({ left: -280, behavior: 'smooth' }) }}
+                    className="shrink-0 w-7 h-7 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center transition-all"
+                  >
+                    <ChevronLeft size={14} />
+                  </button>
+                  <div ref={couponScrollRef} className="flex gap-3 overflow-x-auto no-scrollbar pb-2 flex-1">
+                    {activeCoupons.map((cp, i) => (
+                      <motion.div
+                        key={cp.couponId || cp.id}
+                        initial={{ opacity: 0, x: -20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ delay: i * 0.05 }}
+                        className="shrink-0 w-[260px] glass-card p-4 flex items-start gap-3"
+                      >
+                        <div className="w-10 h-10 rounded-full bg-button-glow flex items-center justify-center shrink-0">
+                          <Tag size={18} className="text-white" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-bold galaxy-text-gradient mb-0.5">{cp.code}</p>
+                          <p className="text-white text-xs font-semibold">
+                            {cp.discountType === 'PERCENTAGE'
+                              ? `Giảm ${cp.discountValue}%`
+                              : `Giảm ${cp.discountValue?.toLocaleString()}₫`}
+                          </p>
+                          {cp.minOrderValue > 0 && (
+                            <p className="text-[10px] text-text-muted mt-0.5">
+                              Đơn từ {cp.minOrderValue?.toLocaleString()}₫
+                            </p>
+                          )}
+                          <Link
+                            to="/?tab=schedule"
+                            className="inline-block mt-2 text-[10px] font-medium text-galaxy-cyan hover:underline"
+                          >
+                            Đặt ngay →
+                          </Link>
+                        </div>
+                      </motion.div>
+                    ))}
+                  </div>
+                  <button
+                    onClick={() => { if (couponScrollRef.current) couponScrollRef.current.scrollBy({ left: 280, behavior: 'smooth' }) }}
+                    className="shrink-0 w-7 h-7 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center transition-all"
+                  >
+                    <ChevronRight size={14} />
+                  </button>
+                </div>
+              </div>
+            )}
+
             {/* Genre filters */}
             {genres.length > 0 && (
               <div className="flex flex-wrap gap-2 mb-6">
