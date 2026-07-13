@@ -87,7 +87,10 @@ public class AdminRoomController {
     public ResponseEntity<Room> updateRoom(@PathVariable UUID id, @Valid @RequestBody UpdateRoomRequest request) {
         Room existing = roomRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Room not found"));
-        if (hasActiveShowtimes(id)) {
+        boolean hasStructuralChanges = request.getRoomName() != null || request.getTotalRows() != null
+                || request.getTotalColumns() != null || request.getAisleAfterColumns() != null
+                || request.getRowSeatTypes() != null;
+        if (hasStructuralChanges && hasActiveShowtimes(id)) {
             throw new BadRequestException("Cannot modify room with active showtimes");
         }
         if (request.getRoomName() != null) existing.setRoomName(request.getRoomName());
