@@ -25,7 +25,7 @@ public interface ShowtimeRepository extends JpaRepository<Showtime, UUID> {
 
     List<Showtime> findByMovieMovieIdAndStatusOrderByStartTimeAsc(UUID movieId, EntityStatus status);
 
-    @Query("SELECT s FROM Showtime s WHERE s.movie.movieId = :movieId AND s.startTime >= :now AND s.status = 'ACTIVE' ORDER BY s.startTime")
+    @Query("SELECT s FROM Showtime s JOIN FETCH s.movie JOIN FETCH s.room WHERE s.movie.movieId = :movieId AND s.startTime >= :now AND s.status = 'ACTIVE' ORDER BY s.startTime")
     List<Showtime> findAvailableShowtimes(@Param("movieId") UUID movieId, @Param("now") LocalDateTime now);
 
     @Query("SELECT COUNT(s) > 0 FROM Showtime s WHERE s.room.roomId = :roomId AND s.status = 'ACTIVE' AND "
