@@ -5,7 +5,6 @@ import java.util.UUID;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -15,10 +14,12 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.cinema.dto.response.MovieResponse;
 import com.cinema.entity.Movie;
 import com.cinema.enums.EntityStatus;
 import com.cinema.exception.ResourceNotFoundException;
 import com.cinema.repository.MovieRepository;
+import com.cinema.service.MovieService;
 
 import lombok.RequiredArgsConstructor;
 
@@ -28,11 +29,11 @@ import lombok.RequiredArgsConstructor;
 public class AdminMovieController {
 
     private final MovieRepository movieRepository;
+    private final MovieService movieService;
 
     @GetMapping
-    @Transactional(readOnly = true)
-    public ResponseEntity<Page<Movie>> getAllMovies(Pageable pageable) {
-        return ResponseEntity.ok(movieRepository.findAll(pageable));
+    public ResponseEntity<Page<MovieResponse>> getAllMovies(Pageable pageable) {
+        return ResponseEntity.ok(movieService.getMovies(null, pageable));
     }
 
     @GetMapping("/{id}")
