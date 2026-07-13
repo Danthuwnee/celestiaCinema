@@ -1,8 +1,10 @@
 package com.cinema.service;
 
+import java.io.IOException;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.scheduling.annotation.Async;
@@ -15,6 +17,12 @@ import com.cinema.entity.BookingCombo;
 import com.cinema.entity.BookingSeat;
 import com.cinema.repository.BookingComboRepository;
 import com.cinema.repository.BookingSeatRepository;
+import com.sendgrid.Method;
+import com.sendgrid.Request;
+import com.sendgrid.SendGrid;
+import com.sendgrid.helpers.mail.Mail;
+import com.sendgrid.helpers.mail.objects.Content;
+import com.sendgrid.helpers.mail.objects.Email;
 
 import jakarta.mail.internet.MimeMessage;
 import lombok.RequiredArgsConstructor;
@@ -22,6 +30,9 @@ import lombok.RequiredArgsConstructor;
 @Service
 @RequiredArgsConstructor
 public class EmailService {
+
+    @Value("${SENDGRID_API_KEY}")
+    private String sendGridApiKey;
 
     private final JavaMailSender mailSender;
     private final SpringTemplateEngine templateEngine;
@@ -62,6 +73,26 @@ public class EmailService {
         } catch (Exception e) {
             // Log error silently - don't fail the booking if email fails
             System.err.println("Failed to send email: " + e.getMessage());
+        }
+    }
+
+    public void sendOtpEmail(String to, String code) {
+        Email from = new Email("celestiacinema@gmail.com");
+        String subject = "Cinema - Đặt lại mật khẩu";
+        Email toEmail = new Email(to);
+        Content content = new Content("text/plain",
+                "Mã xác nhận đặt lại mật khẩu của bạn là: " + code + "\n\nMã có hiệu lực trong 10 phút.");
+        Mail mail = new Mail(from, subject, toEmail, content);
+
+        SendGrid sg = new SendGrid(sendGridApiKey);
+        Request request = new Request();
+        try {
+            request.setMethod(Method.POST);
+            request.setEndpoint("mail/send");
+            request.setBody(mail.build());
+            sg.api(request);
+        } catch (IOException e) {
+            throw new RuntimeException("Gửi email thất bại: " + e.getMessage());
         }
     }
 }

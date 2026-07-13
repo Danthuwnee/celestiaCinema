@@ -3,8 +3,6 @@ package com.cinema.service;
 import java.time.LocalDateTime;
 import java.util.Random;
 
-import org.springframework.mail.SimpleMailMessage;
-import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -38,7 +36,7 @@ public class AuthService {
     private final PasswordEncoder passwordEncoder;
     private final JwtTokenProvider jwtTokenProvider;
     private final PasswordResetTokenRepository passwordResetTokenRepository;
-    private final JavaMailSender mailSender;
+    private final EmailService emailService;
 
     @Transactional
     public AuthResponse register(RegisterRequest request) {
@@ -136,11 +134,7 @@ public class AuthService {
         passwordResetTokenRepository.save(token);
 
         try {
-            SimpleMailMessage message = new SimpleMailMessage();
-            message.setTo(user.getEmail());
-            message.setSubject("Cinema - Đặt lại mật khẩu");
-            message.setText("Mã xác nhận đặt lại mật khẩu của bạn là: " + code + "\n\nMã có hiệu lực trong 10 phút.");
-            mailSender.send(message);
+            emailService.sendOtpEmail(user.getEmail(), code);
         } catch (Exception e) {
             throw new BadRequestException("Gửi email thất bại: " + e.getMessage());
         }
