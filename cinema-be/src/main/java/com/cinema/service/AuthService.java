@@ -142,7 +142,7 @@ public class AuthService {
             message.setText("Mã xác nhận đặt lại mật khẩu của bạn là: " + code + "\n\nMã có hiệu lực trong 10 phút.");
             mailSender.send(message);
         } catch (Exception e) {
-            System.err.println("Failed to send email to " + user.getEmail() + ": " + e.getMessage());
+            throw new BadRequestException("Gửi email thất bại: " + e.getMessage());
         }
 
         System.out.println("======================================");
