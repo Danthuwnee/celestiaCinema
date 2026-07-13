@@ -18,6 +18,7 @@ export default function AdminShowtimes() {
   const [slots, setSlots] = useState([])
   const [loadingSlots, setLoadingSlots] = useState(false)
   const [selectedTimes, setSelectedTimes] = useState([])
+  const [isSubmitting, setIsSubmitting] = useState(false)
 
   useEffect(() => {
     if (!form.movieId || !form.roomId || !form.date) {
@@ -117,6 +118,8 @@ export default function AdminShowtimes() {
       alert('Vui lòng chọn ít nhất 1 khung giờ')
       return
     }
+    if (isSubmitting) return
+    setIsSubmitting(true)
     try {
       const startTimes = selectedTimes.map(t => `${form.date}T${t}:00`)
       await adminApi.batchCreateShowtimes({
@@ -132,6 +135,8 @@ export default function AdminShowtimes() {
       setSlots([])
     } catch (err) {
       alert(err.response?.data || 'Có lỗi xảy ra khi tạo suất chiếu')
+    } finally {
+      setIsSubmitting(false)
     }
   }
 
@@ -230,8 +235,8 @@ export default function AdminShowtimes() {
             <p className="text-xs text-text-muted text-center py-4">Không có khung giờ khả dụng</p>
           ) : null}
 
-          <Button type="submit" className="w-full" disabled={selectedTimes.length === 0}>
-            Tạo {selectedTimes.length > 0 ? selectedTimes.length + ' suất chiếu' : 'suất chiếu'}
+          <Button type="submit" className="w-full" disabled={selectedTimes.length === 0 || isSubmitting}>
+            {isSubmitting ? 'Đang tạo...' : `Tạo ${selectedTimes.length > 0 ? selectedTimes.length + ' suất chiếu' : 'suất chiếu'}`}
           </Button>
         </form>
       </Modal>

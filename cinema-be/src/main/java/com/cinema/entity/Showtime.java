@@ -21,6 +21,7 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
+import jakarta.persistence.UniqueConstraint;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -28,7 +29,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 @Entity
-@Table(name = "showtimes")
+@Table(name = "showtimes", uniqueConstraints = @UniqueConstraint(columnNames = {"room_id", "start_time"}))
 @Getter
 @Setter
 @NoArgsConstructor
