@@ -104,9 +104,9 @@ export default function Register() {
           animate={{ opacity: 1, y: 0 }}
           className="w-full max-w-md"
         >
-          <div className="glass-card p-8 space-y-6">
+          <div className="glass-card p-6 space-y-4">
             <div className="text-center">
-              <h1 className="text-2xl font-bold">Đăng ký</h1>
+              <h1 className="text-xl font-bold">Đăng ký</h1>
               <p className="text-text-muted text-sm mt-1">Tham gia CELESTIA CINEMA ngay hôm nay</p>
             </div>
 
@@ -122,14 +122,14 @@ export default function Register() {
               </div>
             )}
 
-            <form onSubmit={handleSubmit} noValidate className="space-y-4">
+            <form onSubmit={handleSubmit} noValidate className="space-y-3">
               <Input label="Họ tên" type="text" placeholder="Nguyễn Văn A" value={form.fullName} onChange={(e) => update('fullName', e.target.value)} icon={User} error={errors.fullName} />
               <Input label="Email" type="email" placeholder="your@email.com" value={form.email} onChange={(e) => { update('email', e.target.value); setEmailTaken(false) }} icon={Mail} error={errors.email || (emailTaken && 'Email đã được sử dụng')} />
               <Input label="Số điện thoại" type="tel" placeholder="0901234567" value={form.phone} onChange={(e) => update('phone', e.target.value)} icon={Phone} error={errors.phone} />
               <Input label="Mật khẩu" type="password" placeholder="••••••••" value={form.password} onChange={(e) => update('password', e.target.value)} icon={Lock} error={errors.password} />
               <Input label="Xác nhận mật khẩu" type="password" placeholder="••••••••" value={form.confirmPassword} onChange={(e) => update('confirmPassword', e.target.value)} error={errors.confirmPassword} />
 
-              <Button type="submit" disabled={loading || success || emailTaken} className="w-full flex items-center justify-center gap-2 text-lg py-3">
+              <Button type="submit" disabled={loading || success || emailTaken} className="w-full flex items-center justify-center gap-2 text-lg py-2.5">
                 <UserPlus size={20} />
                 {loading ? 'Đang đăng ký...' : 'Đăng ký'}
               </Button>
