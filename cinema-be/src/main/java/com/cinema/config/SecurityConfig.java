@@ -38,6 +38,7 @@ public class SecurityConfig {
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers("/api/auth/register", "/api/auth/login",
                                   "/api/auth/forgot-password", "/api/auth/reset-password",
+                                  "/api/auth/check-email",
                                   "/api/auth/oauth2/**").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/movies/**", "/api/genres/**", "/api/showtimes/**",
                                   "/api/combos/**", "/api/seats/**",
