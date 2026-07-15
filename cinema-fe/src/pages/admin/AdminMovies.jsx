@@ -1,4 +1,7 @@
 import { useState } from 'react'
+import { useForm } from 'react-hook-form'
+import { zodResolver } from '@hookform/resolvers/zod'
+import { z } from 'zod'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { motion } from 'framer-motion'
 import { Plus, Pencil, Trash2, Film, ChevronLeft, ChevronRight } from 'lucide-react'
@@ -15,7 +18,34 @@ export default function AdminMovies() {
   const [totalPages, setTotalPages] = useState(0)
   const pageSize = 12
   const today = new Date().toISOString().split('T')[0]
-  const [form, setForm] = useState({ title: '', description: '', duration: 120, language: 'Tiếng Việt', ageRating: 'T13', showingStartDate: '', showingEndDate: '', trailerUrl: '', posterUrl: '', director: '', actors: '' })
+
+  const movieSchema = z.object({
+    title: z.string().min(1, 'Vui lòng nhập tên phim'),
+    duration: z.number({ invalid_type_error: 'Vui lòng nhập thời lượng' }).min(1, 'Thời lượng phải lớn hơn 0'),
+    language: z.string().min(1, 'Vui lòng nhập ngôn ngữ'),
+    ageRating: z.string(),
+    showingStartDate: z.string().optional(),
+    showingEndDate: z.string().optional(),
+    trailerUrl: z.string().optional(),
+    posterUrl: z.union([z.string().url('URL không hợp lệ'), z.literal('')]).optional(),
+    director: z.string().optional(),
+    actors: z.string().optional(),
+    description: z.string().optional(),
+  }).refine((data) => {
+    if (!data.showingEndDate || !data.showingStartDate) return true
+    return new Date(data.showingEndDate) >= new Date(data.showingStartDate)
+  }, { message: 'Ngày kết thúc phải sau ngày khởi chiếu', path: ['showingEndDate'] })
+
+  const defaultMovieValues = { title: '', description: '', duration: 120, language: 'Tiếng Việt', ageRating: 'T13', showingStartDate: '', showingEndDate: '', trailerUrl: '', posterUrl: '', director: '', actors: '' }
+
+  const { register, handleSubmit: rhfHandleSubmit, formState: { errors, isValid }, watch, reset } = useForm({
+    resolver: zodResolver(movieSchema),
+    defaultValues: defaultMovieValues,
+    mode: 'onChange',
+  })
+  const posterUrl = watch('posterUrl')
+  const trailerUrl = watch('trailerUrl')
+  const showingStartDate = watch('showingStartDate')
 
   const { data, isLoading } = useQuery({
     queryKey: ['admin', 'movies', currentPage],
@@ -27,21 +57,20 @@ export default function AdminMovies() {
 
   const movies = data?.content || data || []
 
-  const handleSubmit = async (e) => {
-    e.preventDefault()
+  const onSubmit = rhfHandleSubmit(async (data) => {
     if (editingMovie) {
-      await adminApi.updateMovie(editingMovie.movieId || editingMovie.id, form)
+      await adminApi.updateMovie(editingMovie.movieId || editingMovie.id, data)
     } else {
-      await adminApi.createMovie(form)
+      await adminApi.createMovie(data)
     }
     queryClient.invalidateQueries({ queryKey: ['admin', 'movies'] })
     setShowForm(false)
     setEditingMovie(null)
-    setForm({ title: '', description: '', duration: 120, language: 'Tiếng Việt', ageRating: 'T13', showingStartDate: '', showingEndDate: '', trailerUrl: '', posterUrl: '', director: '', actors: '' })
-  }
+    reset(defaultMovieValues)
+  })
 
   const handleEdit = (movie) => {
-    setForm({
+    reset({
       title: movie.title,
       description: movie.description || '',
       duration: movie.duration,
@@ -70,11 +99,11 @@ export default function AdminMovies() {
     <div>
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-2xl font-bold flex items-center gap-2"><Film size={24} className="text-galaxy-cyan" /> Quản lý Phim</h1>
-        <Button onClick={() => { setForm({ title: '', description: '', duration: 120, language: 'Tiếng Việt', ageRating: 'T13', showingStartDate: '', showingEndDate: '', trailerUrl: '', posterUrl: '', director: '', actors: '' }); setEditingMovie(null); setShowForm(true) }} className="flex items-center gap-2"><Plus size={16} /> Thêm phim</Button>
+        <Button onClick={() => { reset(defaultMovieValues); setEditingMovie(null); setShowForm(true) }} className="flex items-center gap-2"><Plus size={16} /> Thêm phim</Button>
       </div>
 
-      <Modal isOpen={showForm} onClose={() => { setShowForm(false); setEditingMovie(null) }} title={editingMovie ? 'Sửa phim' : 'Thêm phim'}>
-        <form onSubmit={handleSubmit} className="space-y-3">
+      <Modal isOpen={showForm} onClose={() => { setShowForm(false); setEditingMovie(null); reset(defaultMovieValues) }} title={editingMovie ? 'Sửa phim' : 'Thêm phim'}>
+        <form onSubmit={onSubmit} className="space-y-3">
           {[
             { label: 'Tên phim', field: 'title', type: 'text' },
             { label: 'Thời lượng (phút)', field: 'duration', type: 'number' },
@@ -84,46 +113,48 @@ export default function AdminMovies() {
           ].map(({ label, field, type }) => (
             <div key={field}>
               <label className="text-sm text-text-secondary">{label}</label>
-              <input type={type} value={form[field]} onChange={(e) => setForm(p => ({ ...p, [field]: e.target.value }))} className="input-field mt-1" required={field !== 'trailerUrl' && field !== 'posterUrl'} />
+              <input type={type} {...register(field, field === 'duration' ? { valueAsNumber: true } : {})} className={`input-field mt-1 ${errors[field] ? 'ring-2 ring-red-500' : ''}`} />
+              {errors[field] && <p className="text-red-400 text-xs mt-1">{errors[field].message}</p>}
             </div>
           ))}
-          {form.posterUrl && (
+          {posterUrl && (
             <div>
               <label className="text-sm text-text-secondary">Xem trước Poster</label>
-              <img src={form.posterUrl} alt="Poster preview" className="mt-1 h-40 w-auto rounded object-cover border border-white/10" onError={(e) => { e.target.style.display = 'none' }} />
+              <img src={posterUrl} alt="Poster preview" className="mt-1 h-40 w-auto rounded object-cover border border-white/10" onError={(e) => { e.target.style.display = 'none' }} />
             </div>
           )}
-          {form.trailerUrl && form.trailerUrl.includes('youtube.com') && (
+          {trailerUrl && trailerUrl.includes('youtube.com') && (
             <div>
               <label className="text-sm text-text-secondary">Xem trước Trailer</label>
               <div className="mt-1 aspect-video rounded overflow-hidden bg-black/50">
-                <iframe src={form.trailerUrl.replace('watch?v=', 'embed/')} className="w-full h-full" allowFullScreen title="Trailer preview" />
+                <iframe src={trailerUrl.replace('watch?v=', 'embed/')} className="w-full h-full" allowFullScreen title="Trailer preview" />
               </div>
             </div>
           )}
           <div>
             <label className="text-sm text-text-secondary">Đạo diễn</label>
-            <input type="text" value={form.director} onChange={(e) => setForm(p => ({ ...p, director: e.target.value }))} className="input-field mt-1" />
+            <input type="text" {...register('director')} className="input-field mt-1" />
           </div>
           <div>
             <label className="text-sm text-text-secondary">Diễn viên</label>
-            <textarea value={form.actors} onChange={(e) => setForm(p => ({ ...p, actors: e.target.value }))} className="input-field mt-1" rows={2} />
+            <textarea {...register('actors')} className="input-field mt-1" rows={2} />
           </div>
           <div>
             <label className="text-sm text-text-secondary">Mô tả</label>
-            <textarea value={form.description} onChange={(e) => setForm(p => ({ ...p, description: e.target.value }))} className="input-field mt-1" rows={3} />
+            <textarea {...register('description')} className="input-field mt-1" rows={3} />
           </div>
           <div>
             <label className="text-sm text-text-secondary">Phân loại</label>
-            <select value={form.ageRating} onChange={(e) => setForm(p => ({ ...p, ageRating: e.target.value }))} className="input-field mt-1">
+            <select {...register('ageRating')} className="input-field mt-1">
               {['P', 'T13', 'T16', 'T18'].map(r => <option key={r} value={r}>{r}</option>)}
             </select>
           </div>
           <div className="grid grid-cols-2 gap-3">
-            <div><label className="text-sm text-text-secondary">Ngày khởi chiếu</label><input type="date" min={today} value={form.showingStartDate} onChange={(e) => setForm(p => ({ ...p, showingStartDate: e.target.value }))} className="input-field mt-1" /></div>
-            <div><label className="text-sm text-text-secondary">Ngày kết thúc</label><input type="date" min={form.showingStartDate || today} value={form.showingEndDate} onChange={(e) => setForm(p => ({ ...p, showingEndDate: e.target.value }))} className="input-field mt-1" /></div>
+            <div><label className="text-sm text-text-secondary">Ngày khởi chiếu</label><input type="date" min={today} {...register('showingStartDate')} className={`input-field mt-1 ${errors.showingStartDate ? 'ring-2 ring-red-500' : ''}`} /></div>
+            <div><label className="text-sm text-text-secondary">Ngày kết thúc</label><input type="date" min={showingStartDate || today} {...register('showingEndDate')} className={`input-field mt-1 ${errors.showingEndDate ? 'ring-2 ring-red-500' : ''}`} /></div>
           </div>
-          <Button type="submit" className="w-full">{editingMovie ? 'Cập nhật' : 'Lưu'}</Button>
+          {errors.showingEndDate && <p className="text-red-400 text-xs text-center">{errors.showingEndDate.message}</p>}
+          <Button type="submit" disabled={!isValid} className="w-full">{editingMovie ? 'Cập nhật' : 'Lưu'}</Button>
         </form>
       </Modal>
 

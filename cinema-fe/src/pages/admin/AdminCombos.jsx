@@ -1,4 +1,7 @@
 import { useState } from 'react'
+import { useForm } from 'react-hook-form'
+import { zodResolver } from '@hookform/resolvers/zod'
+import { z } from 'zod'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { motion } from 'framer-motion'
 import { Plus, Pencil, Trash2, Popcorn } from 'lucide-react'
@@ -11,7 +14,22 @@ export default function AdminCombos() {
   const queryClient = useQueryClient()
   const [showForm, setShowForm] = useState(false)
   const [editingCombo, setEditingCombo] = useState(null)
-  const [form, setForm] = useState({ comboName: '', description: '', price: 0, imageUrl: '' })
+
+  const comboSchema = z.object({
+    comboName: z.string().min(1, 'Vui lòng nhập tên combo'),
+    description: z.string().optional(),
+    price: z.number({ invalid_type_error: 'Vui lòng nhập giá' }).min(0, 'Giá không thể âm'),
+    imageUrl: z.string().optional(),
+  })
+
+  const defaultComboValues = { comboName: '', description: '', price: 0, imageUrl: '' }
+
+  const { register, handleSubmit: rhfHandleSubmit, formState: { errors, isValid }, watch, reset } = useForm({
+    resolver: zodResolver(comboSchema),
+    defaultValues: defaultComboValues,
+    mode: 'onChange',
+  })
+  const imageUrl = watch('imageUrl')
 
   const { data, isLoading } = useQuery({
     queryKey: ['admin', 'combos'],
@@ -20,21 +38,20 @@ export default function AdminCombos() {
 
   const combos = data?.content || data || []
 
-  const handleSubmit = async (e) => {
-    e.preventDefault()
+  const onSubmit = rhfHandleSubmit(async (data) => {
     if (editingCombo) {
-      await adminApi.updateCombo(editingCombo.comboId, form)
+      await adminApi.updateCombo(editingCombo.comboId, data)
     } else {
-      await adminApi.createCombo(form)
+      await adminApi.createCombo(data)
     }
     queryClient.invalidateQueries({ queryKey: ['admin', 'combos'] })
     setShowForm(false)
     setEditingCombo(null)
-    setForm({ comboName: '', description: '', price: 0, imageUrl: '' })
-  }
+    reset(defaultComboValues)
+  })
 
   const handleEdit = (combo) => {
-    setForm({ comboName: combo.comboName, description: combo.description || '', price: combo.price, imageUrl: combo.imageUrl || '' })
+    reset({ comboName: combo.comboName, description: combo.description || '', price: combo.price, imageUrl: combo.imageUrl || '' })
     setEditingCombo(combo)
     setShowForm(true)
   }
@@ -51,26 +68,37 @@ export default function AdminCombos() {
     <div>
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-2xl font-bold flex items-center gap-2"><Popcorn size={24} className="text-galaxy-cyan" /> Combo bắp nước</h1>
-        <Button onClick={() => { setForm({ comboName: '', description: '', price: 0, imageUrl: '' }); setEditingCombo(null); setShowForm(true) }} className="flex items-center gap-2"><Plus size={16} /> Thêm combo</Button>
+        <Button onClick={() => { reset(defaultComboValues); setEditingCombo(null); setShowForm(true) }} className="flex items-center gap-2"><Plus size={16} /> Thêm combo</Button>
       </div>
 
-      <Modal isOpen={showForm} onClose={() => { setShowForm(false); setEditingCombo(null) }} title={editingCombo ? 'Sửa combo' : 'Thêm combo'}>
-        <form onSubmit={handleSubmit} className="space-y-3">
-          <div><label className="text-sm text-text-secondary">Tên combo</label><input type="text" value={form.comboName} onChange={(e) => setForm(p => ({ ...p, comboName: e.target.value }))} className="input-field mt-1" required /></div>
-          <div><label className="text-sm text-text-secondary">Mô tả</label><textarea rows={2} value={form.description} onChange={(e) => setForm(p => ({ ...p, description: e.target.value }))} className="input-field mt-1" /></div>
-          <div><label className="text-sm text-text-secondary">Giá</label><input type="number" value={form.price} onChange={(e) => setForm(p => ({ ...p, price: +e.target.value }))} className="input-field mt-1" /></div>
+      <Modal isOpen={showForm} onClose={() => { setShowForm(false); setEditingCombo(null); reset(defaultComboValues) }} title={editingCombo ? 'Sửa combo' : 'Thêm combo'}>
+        <form onSubmit={onSubmit} className="space-y-3">
+          <div>
+            <label className="text-sm text-text-secondary">Tên combo</label>
+            <input type="text" {...register('comboName')} className={`input-field mt-1 ${errors.comboName ? 'ring-2 ring-red-500' : ''}`} />
+            {errors.comboName && <p className="text-red-400 text-xs mt-1">{errors.comboName.message}</p>}
+          </div>
+          <div>
+            <label className="text-sm text-text-secondary">Mô tả</label>
+            <textarea rows={2} {...register('description')} className="input-field mt-1" />
+          </div>
+          <div>
+            <label className="text-sm text-text-secondary">Giá</label>
+            <input type="number" {...register('price', { valueAsNumber: true })} className={`input-field mt-1 ${errors.price ? 'ring-2 ring-red-500' : ''}`} />
+            {errors.price && <p className="text-red-400 text-xs mt-1">{errors.price.message}</p>}
+          </div>
           <div>
             <label className="text-sm text-text-secondary">Hình ảnh URL</label>
-            <input type="text" value={form.imageUrl} onChange={(e) => setForm(p => ({ ...p, imageUrl: e.target.value }))} className="input-field mt-1" />
-            {form.imageUrl && (
+            <input type="text" {...register('imageUrl')} className="input-field mt-1" />
+            {imageUrl && (
               <div className="mt-2">
-                <img src={form.imageUrl} alt="Preview"
+                <img src={imageUrl} alt="Preview"
                   className="w-24 h-24 object-cover rounded-lg border border-white/10"
                   onError={(e) => { e.target.style.display = 'none' }} />
               </div>
             )}
           </div>
-          <Button type="submit" className="w-full">{editingCombo ? 'Cập nhật' : 'Lưu'}</Button>
+          <Button type="submit" disabled={!isValid} className="w-full">{editingCombo ? 'Cập nhật' : 'Lưu'}</Button>
         </form>
       </Modal>
 

@@ -1,4 +1,7 @@
 import { useState } from 'react'
+import { useForm } from 'react-hook-form'
+import { zodResolver } from '@hookform/resolvers/zod'
+import { z } from 'zod'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { motion } from 'framer-motion'
 import { Plus, Pencil, Trash2, Ticket } from 'lucide-react'
@@ -23,7 +26,6 @@ export default function AdminCoupons() {
   const queryClient = useQueryClient()
   const [showForm, setShowForm] = useState(false)
   const [editingCoupon, setEditingCoupon] = useState(null)
-  const [form, setForm] = useState({ code: '', discountType: 'PERCENTAGE', discountValue: 10, quantity: 100, minOrderValue: 0, expiredAt: '' })
   const [formError, setFormError] = useState('')
 
   const { data, isLoading } = useQuery({
@@ -33,21 +35,38 @@ export default function AdminCoupons() {
 
   const coupons = (data?.content || data || [])
 
+  const couponSchema = z.object({
+    code: z.string().min(1, 'Vui lòng nhập mã code'),
+    discountType: z.string(),
+    discountValue: z.number({ invalid_type_error: 'Vui lòng nhập giá trị' }).min(1, 'Giá trị phải lớn hơn 0'),
+    quantity: z.number({ invalid_type_error: 'Vui lòng nhập số lượng' }).min(0),
+    minOrderValue: z.number().min(0),
+    expiredAt: z.string().optional(),
+  })
+
+  const getDefaultCouponValues = (existingCodes = []) => ({
+    code: generateCouponCode(existingCodes),
+    discountType: 'PERCENTAGE',
+    discountValue: 10,
+    quantity: 100,
+    minOrderValue: 0,
+    expiredAt: '',
+  })
+
+  const { register, handleSubmit: rhfHandleSubmit, formState: { errors, isValid }, setValue, reset } = useForm({
+    resolver: zodResolver(couponSchema),
+    defaultValues: getDefaultCouponValues(),
+    mode: 'onChange',
+  })
+
   const resetForm = () => {
-    setForm({
-      code: generateCouponCode(coupons.map(c => c.code)),
-      discountType: 'PERCENTAGE',
-      discountValue: 10,
-      quantity: 100,
-      minOrderValue: 0,
-      expiredAt: '',
-    })
+    reset(getDefaultCouponValues(coupons.map(c => c.code)))
     setEditingCoupon(null)
     setFormError('')
   }
 
   const handleEdit = (coupon) => {
-    setForm({
+    reset({
       code: coupon.code,
       discountType: coupon.discountType,
       discountValue: coupon.discountValue,
@@ -59,13 +78,11 @@ export default function AdminCoupons() {
     setShowForm(true)
   }
 
-  const handleSubmit = async (e) => {
-    e.preventDefault()
+  const onSubmit = rhfHandleSubmit(async (data) => {
     setFormError('')
     const payload = {
-      ...form,
-      expiredAt: form.expiredAt ? form.expiredAt + 'T23:59:59' : null,
-      minOrderValue: Number(form.minOrderValue),
+      ...data,
+      expiredAt: data.expiredAt ? data.expiredAt + 'T23:59:59' : null,
     }
     try {
       if (editingCoupon) {
@@ -79,7 +96,7 @@ export default function AdminCoupons() {
     } catch (err) {
       setFormError(err.response?.data?.error || 'Thao tác thất bại')
     }
-  }
+  })
 
   const handleDelete = async (id) => {
     if (!window.confirm('Xóa mã giảm giá này?')) return
@@ -101,14 +118,15 @@ export default function AdminCoupons() {
       </div>
 
       <Modal isOpen={showForm} onClose={() => { setShowForm(false); resetForm() }} title={editingCoupon ? 'Sửa mã giảm giá' : 'Thêm mã giảm giá'}>
-        <form onSubmit={handleSubmit} className="space-y-3">
+        <form onSubmit={onSubmit} className="space-y-3">
           {formError && <div className="bg-red-500/10 border border-red-500/30 text-red-400 px-4 py-3 rounded-xl text-sm text-center">{formError}</div>}
           <div>
             <label className="text-sm text-text-secondary">Mã code</label>
             <div className="flex items-center gap-2 mt-1">
-              <input type="text" value={form.code} onChange={(e) => setForm(p => ({ ...p, code: e.target.value.toUpperCase() }))} className="input-field flex-1" required />
+              <input type="text" {...register('code', { setValueAs: (v) => v.toUpperCase() })} className={`input-field flex-1 ${errors.code ? 'ring-2 ring-red-500' : ''}`} />
+              {errors.code && <p className="text-red-400 text-xs mt-1">{errors.code.message}</p>}
               {!editingCoupon && (
-                <button type="button" onClick={() => setForm(p => ({ ...p, code: generateCouponCode(coupons.map(c => c.code)) }))} className="text-xs text-galaxy-cyan hover:text-white transition-colors shrink-0">
+                <button type="button" onClick={() => setValue('code', generateCouponCode(coupons.map(c => c.code)), { shouldValidate: true })} className="text-xs text-galaxy-cyan hover:text-white transition-colors shrink-0">
                   Sinh mã
                 </button>
               )}
@@ -116,20 +134,34 @@ export default function AdminCoupons() {
           </div>
           <div>
             <label className="text-sm text-text-secondary">Loại</label>
-            <select value={form.discountType} onChange={(e) => setForm(p => ({ ...p, discountType: e.target.value }))} className="input-field mt-1">
+            <select {...register('discountType')} className="input-field mt-1">
               <option value="PERCENTAGE">Phần trăm</option>
               <option value="FIXED_AMOUNT">Số tiền cố định</option>
             </select>
           </div>
           <div className="grid grid-cols-2 gap-3">
-            <div><label className="text-sm text-text-secondary">Giá trị</label><input type="number" value={form.discountValue} onChange={(e) => setForm(p => ({ ...p, discountValue: +e.target.value }))} className="input-field mt-1" /></div>
-            <div><label className="text-sm text-text-secondary">Số lượng</label><input type="number" value={form.quantity} onChange={(e) => setForm(p => ({ ...p, quantity: +e.target.value }))} className="input-field mt-1" /></div>
+            <div>
+              <label className="text-sm text-text-secondary">Giá trị</label>
+              <input type="number" {...register('discountValue', { valueAsNumber: true })} className={`input-field mt-1 ${errors.discountValue ? 'ring-2 ring-red-500' : ''}`} />
+              {errors.discountValue && <p className="text-red-400 text-xs mt-1">{errors.discountValue.message}</p>}
+            </div>
+            <div>
+              <label className="text-sm text-text-secondary">Số lượng</label>
+              <input type="number" {...register('quantity', { valueAsNumber: true })} className={`input-field mt-1 ${errors.quantity ? 'ring-2 ring-red-500' : ''}`} />
+              {errors.quantity && <p className="text-red-400 text-xs mt-1">{errors.quantity.message}</p>}
+            </div>
           </div>
           <div className="grid grid-cols-2 gap-3">
-            <div><label className="text-sm text-text-secondary">Đơn tối thiểu</label><input type="number" value={form.minOrderValue} onChange={(e) => setForm(p => ({ ...p, minOrderValue: +e.target.value }))} className="input-field mt-1" /></div>
-            <div><label className="text-sm text-text-secondary">Hết hạn</label><input type="date" value={form.expiredAt} onChange={(e) => setForm(p => ({ ...p, expiredAt: e.target.value }))} className="input-field mt-1" min={new Date().toISOString().split('T')[0]} /></div>
+            <div>
+              <label className="text-sm text-text-secondary">Đơn tối thiểu</label>
+              <input type="number" {...register('minOrderValue', { valueAsNumber: true })} className="input-field mt-1" />
+            </div>
+            <div>
+              <label className="text-sm text-text-secondary">Hết hạn</label>
+              <input type="date" {...register('expiredAt')} className="input-field mt-1" min={new Date().toISOString().split('T')[0]} />
+            </div>
           </div>
-          <Button type="submit" className="w-full">{editingCoupon ? 'Cập nhật' : 'Lưu'}</Button>
+          <Button type="submit" disabled={!isValid} className="w-full">{editingCoupon ? 'Cập nhật' : 'Lưu'}</Button>
         </form>
       </Modal>
 
