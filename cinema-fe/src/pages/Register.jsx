@@ -96,46 +96,46 @@ export default function Register() {
   const update = (field, value) => setForm(prev => ({ ...prev, [field]: value }))
 
   return (
-    <div className="h-screen flex -mt-16 overflow-hidden bg-gradient-to-br from-galaxy-purple/10 via-space-dark to-galaxy-cyan/10">
+    <div className="h-[calc(100vh-4rem)] flex overflow-hidden bg-gradient-to-br from-galaxy-purple/10 via-space-dark to-galaxy-cyan/10">
       <BrandSide />
-      <div className="w-full lg:w-2/5 h-screen overflow-y-auto flex items-center justify-center p-4 bg-space-dark/20 backdrop-blur-md">
+      <div className="w-full lg:w-2/5 h-full overflow-y-auto flex items-center justify-center p-4 bg-space-dark/20 backdrop-blur-md">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           className="w-full max-w-md"
         >
-          <div className="glass-card p-6 space-y-4">
+          <div className="glass-card p-5 space-y-3">
             <div className="text-center">
-              <h1 className="text-xl font-bold">Đăng ký</h1>
-              <p className="text-text-muted text-sm mt-1">Tham gia CELESTIA CINEMA ngay hôm nay</p>
+              <h1 className="text-lg font-bold">Đăng ký</h1>
+              <p className="text-text-muted text-xs mt-0.5">Tham gia CELESTIA CINEMA ngay hôm nay</p>
             </div>
 
             {success && (
-              <div className="bg-green-500/10 border border-green-500/30 text-green-400 px-4 py-3 rounded-xl text-sm text-center">
+              <div className="bg-green-500/10 border border-green-500/30 text-green-400 px-3 py-2 rounded-xl text-xs text-center">
                 Đăng ký thành công! Đang chuyển hướng...
               </div>
             )}
 
             {serverError && (
-              <div className="bg-red-500/10 border border-red-500/30 text-red-400 px-4 py-3 rounded-xl text-sm text-center">
+              <div className="bg-red-500/10 border border-red-500/30 text-red-400 px-3 py-2 rounded-xl text-xs text-center">
                 {serverError}
               </div>
             )}
 
-            <form onSubmit={handleSubmit} noValidate className="space-y-3">
+            <form onSubmit={handleSubmit} noValidate className="space-y-2.5">
               <Input label="Họ tên" type="text" placeholder="Nguyễn Văn A" value={form.fullName} onChange={(e) => update('fullName', e.target.value)} icon={User} error={errors.fullName} />
               <Input label="Email" type="email" placeholder="your@email.com" value={form.email} onChange={(e) => { update('email', e.target.value); setEmailTaken(false) }} icon={Mail} error={errors.email || (emailTaken && 'Email đã được sử dụng')} />
               <Input label="Số điện thoại" type="tel" placeholder="0901234567" value={form.phone} onChange={(e) => update('phone', e.target.value)} icon={Phone} error={errors.phone} />
               <Input label="Mật khẩu" type="password" placeholder="••••••••" value={form.password} onChange={(e) => update('password', e.target.value)} icon={Lock} error={errors.password} />
               <Input label="Xác nhận mật khẩu" type="password" placeholder="••••••••" value={form.confirmPassword} onChange={(e) => update('confirmPassword', e.target.value)} error={errors.confirmPassword} />
 
-              <Button type="submit" disabled={loading || success || emailTaken} className="w-full flex items-center justify-center gap-2 text-lg py-2.5">
-                <UserPlus size={20} />
+              <Button type="submit" disabled={loading || success || emailTaken} className="w-full flex items-center justify-center gap-2 text-base py-2">
+                <UserPlus size={18} />
                 {loading ? 'Đang đăng ký...' : 'Đăng ký'}
               </Button>
             </form>
 
-            <p className="text-center text-sm text-text-muted">
+            <p className="text-center text-xs text-text-muted">
               Đã có tài khoản?{' '}
               <Link to="/login" className="text-galaxy-purple hover:text-galaxy-pink transition-colors font-medium">
                 Đăng nhập

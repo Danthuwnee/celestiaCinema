@@ -72,9 +72,9 @@ export default function ForgotPassword() {
   }
 
   return (
-    <div className="h-screen flex -mt-16 overflow-hidden bg-gradient-to-br from-galaxy-purple/10 via-space-dark to-galaxy-cyan/10">
+    <div className="h-[calc(100vh-4rem)] flex overflow-hidden bg-gradient-to-br from-galaxy-purple/10 via-space-dark to-galaxy-cyan/10">
       <BrandSide />
-      <div className="w-full lg:w-2/5 h-screen overflow-y-auto flex items-center justify-center p-4 bg-space-dark/20 backdrop-blur-md">
+      <div className="w-full lg:w-2/5 h-full overflow-y-auto flex items-center justify-center p-4 bg-space-dark/20 backdrop-blur-md">
         <div className="w-full max-w-md">
           <div className="glass-card p-8">
             <AnimatePresence mode="wait">
