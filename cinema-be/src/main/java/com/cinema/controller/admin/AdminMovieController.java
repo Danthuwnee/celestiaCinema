@@ -14,13 +14,17 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.cinema.dto.request.CreateMovieRequest;
+import com.cinema.dto.request.UpdateMovieRequest;
 import com.cinema.dto.response.MovieResponse;
 import com.cinema.entity.Movie;
 import com.cinema.enums.EntityStatus;
+import com.cinema.exception.BadRequestException;
 import com.cinema.exception.ResourceNotFoundException;
 import com.cinema.repository.MovieRepository;
 import com.cinema.service.MovieService;
 
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
 @RestController
@@ -43,12 +47,30 @@ public class AdminMovieController {
     }
 
     @PostMapping
-    public ResponseEntity<Movie> createMovie(@RequestBody Movie movie) {
+    public ResponseEntity<Movie> createMovie(@Valid @RequestBody CreateMovieRequest request) {
+        if (request.getShowingEndDate() != null && request.getShowingStartDate() != null
+                && request.getShowingEndDate().isBefore(request.getShowingStartDate())) {
+            throw new BadRequestException("Ngày kết thúc phải sau ngày khởi chiếu");
+        }
+        Movie movie = Movie.builder()
+                .title(request.getTitle())
+                .description(request.getDescription())
+                .duration(request.getDuration())
+                .language(request.getLanguage())
+                .ageRating(request.getAgeRating())
+                .trailerUrl(request.getTrailerUrl())
+                .posterUrl(request.getPosterUrl())
+                .director(request.getDirector())
+                .actors(request.getActors())
+                .showingStartDate(request.getShowingStartDate())
+                .showingEndDate(request.getShowingEndDate())
+                .status(EntityStatus.ACTIVE)
+                .build();
         return ResponseEntity.ok(movieRepository.save(movie));
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<Movie> updateMovie(@PathVariable UUID id, @RequestBody Movie request) {
+    public ResponseEntity<Movie> updateMovie(@PathVariable UUID id, @Valid @RequestBody UpdateMovieRequest request) {
         Movie existing = movieRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Movie not found"));
         if (request.getTitle() != null) existing.setTitle(request.getTitle());
@@ -61,7 +83,13 @@ public class AdminMovieController {
         if (request.getTrailerUrl() != null) existing.setTrailerUrl(request.getTrailerUrl());
         if (request.getPosterUrl() != null) existing.setPosterUrl(request.getPosterUrl());
         if (request.getShowingStartDate() != null) existing.setShowingStartDate(request.getShowingStartDate());
-        if (request.getShowingEndDate() != null) existing.setShowingEndDate(request.getShowingEndDate());
+        if (request.getShowingEndDate() != null) {
+            if (existing.getShowingStartDate() != null
+                    && request.getShowingEndDate().isBefore(existing.getShowingStartDate())) {
+                throw new BadRequestException("Ngày kết thúc phải sau ngày khởi chiếu");
+            }
+            existing.setShowingEndDate(request.getShowingEndDate());
+        }
         return ResponseEntity.ok(movieRepository.save(existing));
     }
 

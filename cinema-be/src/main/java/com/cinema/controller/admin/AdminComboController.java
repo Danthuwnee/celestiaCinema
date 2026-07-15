@@ -14,11 +14,14 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.cinema.dto.request.CreateComboRequest;
+import com.cinema.dto.request.UpdateComboRequest;
 import com.cinema.entity.Combo;
 import com.cinema.enums.EntityStatus;
 import com.cinema.exception.ResourceNotFoundException;
 import com.cinema.repository.ComboRepository;
 
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
 @RestController
@@ -34,12 +37,19 @@ public class AdminComboController {
     }
 
     @PostMapping
-    public ResponseEntity<Combo> createCombo(@RequestBody Combo combo) {
+    public ResponseEntity<Combo> createCombo(@Valid @RequestBody CreateComboRequest request) {
+        Combo combo = Combo.builder()
+                .comboName(request.getComboName())
+                .description(request.getDescription())
+                .price(request.getPrice())
+                .imageUrl(request.getImageUrl())
+                .status(EntityStatus.ACTIVE)
+                .build();
         return ResponseEntity.ok(comboRepository.save(combo));
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<Combo> updateCombo(@PathVariable UUID id, @RequestBody Combo request) {
+    public ResponseEntity<Combo> updateCombo(@PathVariable UUID id, @Valid @RequestBody UpdateComboRequest request) {
         Combo existing = comboRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Combo not found"));
         if (request.getComboName() != null) existing.setComboName(request.getComboName());

@@ -14,11 +14,14 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.cinema.dto.request.CreateCouponRequest;
+import com.cinema.dto.request.UpdateCouponRequest;
 import com.cinema.entity.Coupon;
 import com.cinema.enums.EntityStatus;
 import com.cinema.exception.ResourceNotFoundException;
 import com.cinema.repository.CouponRepository;
 
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
 @RestController
@@ -34,12 +37,21 @@ public class AdminCouponController {
     }
 
     @PostMapping
-    public ResponseEntity<Coupon> createCoupon(@RequestBody Coupon coupon) {
+    public ResponseEntity<Coupon> createCoupon(@Valid @RequestBody CreateCouponRequest request) {
+        Coupon coupon = Coupon.builder()
+                .code(request.getCode())
+                .discountType(request.getDiscountType())
+                .discountValue(request.getDiscountValue())
+                .quantity(request.getQuantity())
+                .minOrderValue(request.getMinOrderValue())
+                .expiredAt(request.getExpiredAt())
+                .status(EntityStatus.ACTIVE)
+                .build();
         return ResponseEntity.ok(couponRepository.save(coupon));
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<Coupon> updateCoupon(@PathVariable UUID id, @RequestBody Coupon request) {
+    public ResponseEntity<Coupon> updateCoupon(@PathVariable UUID id, @Valid @RequestBody UpdateCouponRequest request) {
         Coupon existing = couponRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Coupon not found"));
         if (request.getCode() != null) existing.setCode(request.getCode());
