@@ -1,7 +1,8 @@
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { User, Mail, Phone, Lock, UserPlus } from 'lucide-react'
+import authApi from '../api/authApi'
 import { useAuth } from '../contexts/AuthContext'
 import Input from '../components/ui/Input'
 import Button from '../components/ui/Button'
@@ -12,8 +13,32 @@ export default function Register() {
   const [serverError, setServerError] = useState('')
   const [loading, setLoading] = useState(false)
   const [success, setSuccess] = useState(false)
+  const [emailChecking, setEmailChecking] = useState(false)
+  const [emailTaken, setEmailTaken] = useState(false)
   const { register } = useAuth()
   const navigate = useNavigate()
+  const emailTimer = useRef(null)
+
+  useEffect(() => {
+    const email = form.email.trim()
+    if (!email || !/\S+@\S+\.\S+/.test(email)) {
+      setEmailTaken(false)
+      return
+    }
+    setEmailChecking(true)
+    clearTimeout(emailTimer.current)
+    emailTimer.current = setTimeout(async () => {
+      try {
+        const res = await authApi.checkEmail(email)
+        setEmailTaken(!res.data.available)
+      } catch {
+        setEmailTaken(false)
+      } finally {
+        setEmailChecking(false)
+      }
+    }, 500)
+    return () => clearTimeout(emailTimer.current)
+  }, [form.email])
 
   const validatePassword = (pw) => {
     if (!pw) return 'Vui lòng nhập mật khẩu'
@@ -96,12 +121,12 @@ export default function Register() {
 
           <form onSubmit={handleSubmit} noValidate className="space-y-4">
             <Input label="Họ tên" type="text" placeholder="Nguyễn Văn A" value={form.fullName} onChange={(e) => update('fullName', e.target.value)} icon={User} error={errors.fullName} />
-            <Input label="Email" type="email" placeholder="your@email.com" value={form.email} onChange={(e) => update('email', e.target.value)} icon={Mail} error={errors.email} />
+            <Input label="Email" type="email" placeholder="your@email.com" value={form.email} onChange={(e) => { update('email', e.target.value); setEmailTaken(false) }} icon={Mail} error={errors.email || (emailTaken && 'Email đã được sử dụng')} />
             <Input label="Số điện thoại" type="tel" placeholder="0901234567" value={form.phone} onChange={(e) => update('phone', e.target.value)} icon={Phone} error={errors.phone} />
             <Input label="Mật khẩu" type="password" placeholder="••••••••" value={form.password} onChange={(e) => update('password', e.target.value)} icon={Lock} error={errors.password} />
             <Input label="Xác nhận mật khẩu" type="password" placeholder="••••••••" value={form.confirmPassword} onChange={(e) => update('confirmPassword', e.target.value)} error={errors.confirmPassword} />
 
-            <Button type="submit" disabled={loading || success} className="w-full flex items-center justify-center gap-2 text-lg py-3">
+            <Button type="submit" disabled={loading || success || emailTaken} className="w-full flex items-center justify-center gap-2 text-lg py-3">
               <UserPlus size={20} />
               {loading ? 'Đang đăng ký...' : 'Đăng ký'}
             </Button>

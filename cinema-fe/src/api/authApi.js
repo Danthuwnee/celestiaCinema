@@ -8,6 +8,7 @@ const authApi = {
   changePassword: (data) => axiosClient.put('/auth/change-password', data),
   forgotPassword: (email) => axiosClient.post('/auth/forgot-password', { email }),
   resetPassword: (data) => axiosClient.post('/auth/reset-password', data),
+  checkEmail: (email) => axiosClient.get('/auth/check-email', { params: { email } }),
 }
 
 export default authApi
