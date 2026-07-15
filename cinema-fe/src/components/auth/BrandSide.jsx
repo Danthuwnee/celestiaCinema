@@ -2,7 +2,7 @@ import { Star, Film, Ticket, Popcorn } from 'lucide-react'
 
 export default function BrandSide() {
   return (
-    <div className="hidden lg:flex w-1/2 relative items-center justify-center bg-gradient-to-br from-galaxy-purple/5 via-space-dark to-galaxy-cyan/5 overflow-hidden">
+    <div className="hidden lg:flex w-3/5 relative items-center justify-center overflow-hidden">
       <div className="relative z-10 text-center px-12 max-w-lg">
         <div className="w-16 h-16 mx-auto rounded-full bg-button-glow flex items-center justify-center">
           <Star size={28} className="text-galaxy-cyan" fill="#00D4FF" />

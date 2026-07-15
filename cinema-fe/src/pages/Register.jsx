@@ -96,9 +96,9 @@ export default function Register() {
   const update = (field, value) => setForm(prev => ({ ...prev, [field]: value }))
 
   return (
-    <div className="min-h-screen flex -mt-16">
+    <div className="h-screen flex -mt-16 overflow-hidden bg-gradient-to-br from-galaxy-purple/10 via-space-dark to-galaxy-cyan/10">
       <BrandSide />
-      <div className="w-full lg:w-1/2 min-h-screen flex items-center justify-center p-4 bg-space-dark/30 backdrop-blur-sm">
+      <div className="w-full lg:w-2/5 h-screen overflow-y-auto flex items-center justify-center p-4 bg-space-dark/20 backdrop-blur-md">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
