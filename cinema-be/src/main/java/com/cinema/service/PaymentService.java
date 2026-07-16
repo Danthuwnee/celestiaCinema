@@ -125,6 +125,8 @@ public class PaymentService {
 
         Map<String, Object> embedDataMap = new HashMap<>();
         embedDataMap.put("booking_id", bookingId.toString());
+        embedDataMap.put("redirecturl", "https://celestiacinema-3.onrender.com/booking/success?bookingId=" + bookingId.toString());
+
         String embedData = objectMapper.writeValueAsString(embedDataMap);
 
         String description = "Thanh toan ve xem phim";

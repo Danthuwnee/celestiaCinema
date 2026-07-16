@@ -6,6 +6,7 @@ import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.Base64;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
@@ -24,12 +25,15 @@ public class ZaloPayService {
     private final ZaloPayConfig config;
     private final ObjectMapper objectMapper;
 
-    public Map<String, Object> createOrder(String appUserId, long amount, String description, String embedData) throws Exception {
+    public Map<String, Object> createOrder(String appUserId, long amount, String description, String embedDataRaw) throws Exception {
         String appTransId = generateAppTransId();
         long appTime = System.currentTimeMillis();
 
-        String items = "[]";
-        String macData = config.getAppId() + "|" + appTransId + "|" + appUserId + "|" + amount + "|" + appTime + "|" + embedData + "|" + items;
+        String itemRaw = "[]";
+        String embedDataB64 = Base64.getEncoder().encodeToString(embedDataRaw.getBytes(StandardCharsets.UTF_8));
+        String itemB64 = Base64.getEncoder().encodeToString(itemRaw.getBytes(StandardCharsets.UTF_8));
+
+        String macData = config.getAppId() + "|" + appTransId + "|" + appUserId + "|" + amount + "|" + appTime + "|" + embedDataB64 + "|" + itemB64;
         String mac = HMACUtil.HMacHexStringEncode(HMACUtil.HMACSHA256, config.getKey1(), macData);
 
         Map<String, Object> order = new HashMap<>();
@@ -39,8 +43,8 @@ public class ZaloPayService {
         order.put("app_time", appTime);
         order.put("amount", amount);
         order.put("description", description);
-        order.put("embed_data", embedData);
-        order.put("item", items);
+        order.put("embed_data", embedDataB64);
+        order.put("item", itemB64);
         order.put("bank_code", "");
         order.put("mac", mac);
 
