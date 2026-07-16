@@ -59,8 +59,11 @@ export default function Register() {
     if (!form.email.trim()) errs.email = 'Vui lòng nhập email'
     else if (!/\S+@\S+\.\S+/.test(form.email)) errs.email = 'Email không hợp lệ'
 
-    if (!form.phone.trim()) errs.phone = 'Vui lòng nhập số điện thoại'
-    else if (!/^0\d{9}$/.test(form.phone)) errs.phone = 'Số điện thoại phải có 10 số'
+    const phone = form.phone.trim()
+    if (!phone) errs.phone = 'Vui lòng nhập số điện thoại'
+    else if (!phone.startsWith('0')) errs.phone = 'Số điện thoại phải bắt đầu bằng số 0'
+    else if (!/^\d+$/.test(phone)) errs.phone = 'Số điện thoại chỉ được chứa chữ số'
+    else if (phone.length !== 10) errs.phone = 'Số điện thoại phải có đúng 10 số'
 
     const passwordErr = validatePassword(form.password)
     if (passwordErr) errs.password = passwordErr
@@ -98,16 +101,16 @@ export default function Register() {
   return (
     <div className="h-[calc(100vh-4rem)] flex overflow-hidden bg-gradient-to-br from-galaxy-purple/10 via-space-dark to-galaxy-cyan/10">
       <BrandSide />
-      <div className="w-full lg:w-2/5 h-full overflow-y-auto flex items-center justify-center p-4 bg-space-dark/20 backdrop-blur-md">
+      <div className="w-full lg:w-2/5 h-full overflow-y-auto flex items-start justify-center pt-3 p-4 bg-space-dark/20 backdrop-blur-md">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           className="w-full max-w-md"
         >
-          <div className="glass-card p-5 space-y-3">
+          <div className="glass-card p-3.5 space-y-1.5">
             <div className="text-center">
-              <h1 className="text-lg font-bold">Đăng ký</h1>
-              <p className="text-text-muted text-xs mt-0.5">Tham gia CELESTIA CINEMA ngay hôm nay</p>
+              <h1 className="text-base font-bold">Đăng ký</h1>
+              <p className="text-text-muted text-[11px] mt-0.5">Tham gia CELESTIA CINEMA ngay hôm nay</p>
             </div>
 
             {success && (
@@ -122,7 +125,7 @@ export default function Register() {
               </div>
             )}
 
-            <form onSubmit={handleSubmit} noValidate className="space-y-2.5">
+            <form onSubmit={handleSubmit} noValidate className="space-y-1.5">
               <Input label="Họ tên" type="text" placeholder="Nguyễn Văn A" value={form.fullName} onChange={(e) => update('fullName', e.target.value)} icon={User} error={errors.fullName} />
               <Input label="Email" type="email" placeholder="your@email.com" value={form.email} onChange={(e) => { update('email', e.target.value); setEmailTaken(false) }} icon={Mail} error={errors.email || (emailTaken && 'Email đã được sử dụng')} />
               <Input label="Số điện thoại" type="tel" placeholder="0901234567" value={form.phone} onChange={(e) => update('phone', e.target.value)} icon={Phone} error={errors.phone} />
