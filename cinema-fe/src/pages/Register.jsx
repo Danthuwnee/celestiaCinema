@@ -51,25 +51,46 @@ export default function Register() {
     return null
   }
 
+  const validateField = (field, value) => {
+    switch (field) {
+      case 'fullName':
+        if (!value.trim()) return 'Vui lòng nhập họ tên'
+        if (value.trim().split(/\s+/).length < 2) return 'Họ tên phải có ít nhất 2 từ'
+        return null
+      case 'email':
+        if (!value.trim()) return 'Vui lòng nhập email'
+        if (!/\S+@\S+\.\S+/.test(value)) return 'Email không hợp lệ'
+        return null
+      case 'phone':
+        if (!value.trim()) return 'Vui lòng nhập số điện thoại'
+        if (!value.startsWith('0')) return 'Số điện thoại phải bắt đầu bằng số 0'
+        if (!/^\d+$/.test(value)) return 'Số điện thoại chỉ được chứa chữ số'
+        if (value.length !== 10) return 'Số điện thoại phải có đúng 10 số'
+        return null
+      case 'password':
+        return validatePassword(value)
+      case 'confirmPassword':
+        if (!form.password) return null
+        if (value !== form.password) return 'Mật khẩu không khớp'
+        return null
+      default:
+        return null
+    }
+  }
+
   const validate = () => {
+    const fields = ['fullName', 'email', 'phone', 'password', 'confirmPassword']
     const errs = {}
-    if (!form.fullName.trim()) errs.fullName = 'Vui lòng nhập họ tên'
-    else if (form.fullName.trim().length < 2) errs.fullName = 'Họ tên tối thiểu 2 ký tự'
-
-    if (!form.email.trim()) errs.email = 'Vui lòng nhập email'
-    else if (!/\S+@\S+\.\S+/.test(form.email)) errs.email = 'Email không hợp lệ'
-
-    const phone = form.phone.trim()
-    if (!phone) errs.phone = 'Vui lòng nhập số điện thoại'
-    else if (!phone.startsWith('0')) errs.phone = 'Số điện thoại phải bắt đầu bằng số 0'
-    else if (!/^\d+$/.test(phone)) errs.phone = 'Số điện thoại chỉ được chứa chữ số'
-    else if (phone.length !== 10) errs.phone = 'Số điện thoại phải có đúng 10 số'
-
-    const passwordErr = validatePassword(form.password)
-    if (passwordErr) errs.password = passwordErr
-
-    if (form.password !== form.confirmPassword) errs.confirmPassword = 'Mật khẩu không khớp'
+    for (const field of fields) {
+      const err = validateField(field, form[field])
+      if (err) errs[field] = err
+    }
     return errs
+  }
+
+  const handleBlur = (field) => {
+    const err = validateField(field, form[field])
+    setErrors(prev => ({ ...prev, [field]: err }))
   }
 
   const handleSubmit = async (e) => {
@@ -126,11 +147,11 @@ export default function Register() {
             )}
 
             <form onSubmit={handleSubmit} noValidate className="space-y-1.5">
-              <Input label="Họ tên" type="text" placeholder="Nguyễn Văn A" value={form.fullName} onChange={(e) => update('fullName', e.target.value)} icon={User} error={errors.fullName} />
-              <Input label="Email" type="email" placeholder="your@email.com" value={form.email} onChange={(e) => { update('email', e.target.value); setEmailTaken(false) }} icon={Mail} error={errors.email || (emailTaken && 'Email đã được sử dụng')} />
-              <Input label="Số điện thoại" type="tel" placeholder="0901234567" value={form.phone} onChange={(e) => update('phone', e.target.value)} icon={Phone} error={errors.phone} />
-              <Input label="Mật khẩu" type="password" placeholder="••••••••" value={form.password} onChange={(e) => update('password', e.target.value)} icon={Lock} error={errors.password} />
-              <Input label="Xác nhận mật khẩu" type="password" placeholder="••••••••" value={form.confirmPassword} onChange={(e) => update('confirmPassword', e.target.value)} error={errors.confirmPassword} />
+              <Input label="Họ tên" type="text" placeholder="Nguyễn Văn A" value={form.fullName} onChange={(e) => update('fullName', e.target.value)} onBlur={() => handleBlur('fullName')} icon={User} error={errors.fullName} />
+              <Input label="Email" type="email" placeholder="your@email.com" value={form.email} onChange={(e) => { update('email', e.target.value); setEmailTaken(false) }} onBlur={() => handleBlur('email')} icon={Mail} error={errors.email || (emailTaken && 'Email đã được sử dụng')} />
+              <Input label="Số điện thoại" type="tel" placeholder="0901234567" value={form.phone} onChange={(e) => update('phone', e.target.value)} onBlur={() => handleBlur('phone')} icon={Phone} error={errors.phone} />
+              <Input label="Mật khẩu" type="password" placeholder="••••••••" value={form.password} onChange={(e) => update('password', e.target.value)} onBlur={() => handleBlur('password')} icon={Lock} error={errors.password} />
+              <Input label="Xác nhận mật khẩu" type="password" placeholder="••••••••" value={form.confirmPassword} onChange={(e) => update('confirmPassword', e.target.value)} onBlur={() => handleBlur('confirmPassword')} error={errors.confirmPassword} />
 
               <Button type="submit" disabled={loading || success || emailTaken} className="w-full flex items-center justify-center gap-2 text-base py-2">
                 <UserPlus size={18} />
