@@ -27,8 +27,8 @@ public interface MovieRepository extends JpaRepository<Movie, UUID> {
     @Query("SELECT m FROM Movie m WHERE m.showingStartDate > :today AND m.status = 'COMING_SOON'")
     Page<Movie> findComingSoon(@Param("today") LocalDate today, Pageable pageable);
 
-    @Query(value = "SELECT * FROM movies m WHERE to_tsvector('simple', m.title) @@ plainto_tsquery('simple', :keyword) AND m.status::text IN :statuses",
-           countQuery = "SELECT count(*) FROM movies m WHERE to_tsvector('simple', m.title) @@ plainto_tsquery('simple', :keyword) AND m.status::text IN :statuses",
+    @Query(value = "SELECT * FROM movies m WHERE to_tsvector('simple', m.title) @@ plainto_tsquery('simple', :keyword) AND m.status::text = ANY(:statuses)",
+           countQuery = "SELECT count(*) FROM movies m WHERE to_tsvector('simple', m.title) @@ plainto_tsquery('simple', :keyword) AND m.status::text = ANY(:statuses)",
            nativeQuery = true)
     Page<Movie> searchByTitle(@Param("keyword") String keyword, @Param("statuses") List<String> statuses, Pageable pageable);
 
