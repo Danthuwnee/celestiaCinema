@@ -1,8 +1,9 @@
 package com.cinema.zalopay;
 
-import java.io.OutputStream;
-import java.net.HttpURLConnection;
-import java.net.URL;
+import java.net.URI;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -11,6 +12,8 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import com.cinema.zalopay.crypto.HMACUtil;
@@ -22,8 +25,11 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class ZaloPayService {
 
+    private static final Logger log = LoggerFactory.getLogger(ZaloPayService.class);
+
     private final ZaloPayConfig config;
     private final ObjectMapper objectMapper;
+    private final HttpClient httpClient = HttpClient.newHttpClient();
 
     public Map<String, Object> createOrder(String appUserId, long amount, String description, String embedDataRaw) throws Exception {
         String appTransId = generateAppTransId();
@@ -45,28 +51,25 @@ public class ZaloPayService {
         order.put("description", description);
         order.put("embed_data", embedDataB64);
         order.put("item", itemB64);
-        order.put("bank_code", "");
+        order.put("bank_code", "zalopayapp");
         order.put("mac", mac);
 
         String body = objectMapper.writeValueAsString(order);
+        log.debug("ZaloPay create order request: {}", body);
 
-        URL url = new URL(config.getEndpoint() + "/create");
-        HttpURLConnection conn = (HttpURLConnection) url.openConnection();
-        conn.setRequestMethod("POST");
-        conn.setRequestProperty("Content-Type", "application/json");
-        conn.setDoOutput(true);
+        HttpRequest request = HttpRequest.newBuilder()
+                .uri(URI.create(config.getEndpoint() + "/create"))
+                .header("Content-Type", "application/json")
+                .POST(HttpRequest.BodyPublishers.ofString(body, StandardCharsets.UTF_8))
+                .build();
 
-        try (OutputStream os = conn.getOutputStream()) {
-            os.write(body.getBytes(StandardCharsets.UTF_8));
+        HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
+        String responseBody = response.body();
+        log.debug("ZaloPay create order response ({}): {}", response.statusCode(), responseBody);
+
+        if (response.statusCode() != 200) {
+            throw new RuntimeException("ZaloPay API HTTP " + response.statusCode() + ": " + responseBody);
         }
-
-        int responseCode = conn.getResponseCode();
-        if (responseCode != 200) {
-            throw new RuntimeException("ZaloPay API error: " + responseCode);
-        }
-
-        byte[] responseBytes = conn.getInputStream().readAllBytes();
-        String responseBody = new String(responseBytes, StandardCharsets.UTF_8);
 
         @SuppressWarnings("unchecked")
         Map<String, Object> result = objectMapper.readValue(responseBody, Map.class);
@@ -95,24 +98,19 @@ public class ZaloPayService {
 
         String body = objectMapper.writeValueAsString(query);
 
-        URL url = new URL(config.getEndpoint() + "/query");
-        HttpURLConnection conn = (HttpURLConnection) url.openConnection();
-        conn.setRequestMethod("POST");
-        conn.setRequestProperty("Content-Type", "application/json");
-        conn.setDoOutput(true);
+        HttpRequest request = HttpRequest.newBuilder()
+                .uri(URI.create(config.getEndpoint() + "/query"))
+                .header("Content-Type", "application/json")
+                .POST(HttpRequest.BodyPublishers.ofString(body, StandardCharsets.UTF_8))
+                .build();
 
-        try (OutputStream os = conn.getOutputStream()) {
-            os.write(body.getBytes(StandardCharsets.UTF_8));
+        HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
+
+        if (response.statusCode() != 200) {
+            throw new RuntimeException("ZaloPay query error: " + response.statusCode() + ": " + response.body());
         }
 
-        int responseCode = conn.getResponseCode();
-        if (responseCode != 200) {
-            throw new RuntimeException("ZaloPay query error: " + responseCode);
-        }
-
-        byte[] responseBytes = conn.getInputStream().readAllBytes();
-        String responseBody = new String(responseBytes, StandardCharsets.UTF_8);
-        return objectMapper.readValue(responseBody, Map.class);
+        return objectMapper.readValue(response.body(), Map.class);
     }
 
     private String generateAppTransId() {

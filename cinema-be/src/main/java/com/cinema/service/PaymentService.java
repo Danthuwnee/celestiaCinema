@@ -122,6 +122,9 @@ public class PaymentService {
 
         String appUserId = principal.getUserId();
         long amount = booking.getTotalAmount().longValue();
+        if (amount < 10000) {
+            throw new BadRequestException("Số tiền thanh toán tối thiểu là 10,000₫");
+        }
 
         Map<String, Object> embedDataMap = new HashMap<>();
         embedDataMap.put("booking_id", bookingId.toString());
@@ -137,7 +140,7 @@ public class PaymentService {
 
         String returnCode = String.valueOf(zpResult.get("return_code"));
         if (!"1".equals(returnCode)) {
-            throw new RuntimeException("ZaloPay create order failed: " + zpResult.get("return_message"));
+            throw new RuntimeException("ZaloPay create order failed (code=" + returnCode + "): " + zpResult.get("return_message"));
         }
 
         Payment payment = Payment.builder()
