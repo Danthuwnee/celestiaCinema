@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo, useCallback, useRef } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { motion, AnimatePresence } from 'framer-motion'
-import { ChevronRight, Minus, Plus, Ticket, ShoppingBag, CreditCard, Clock, CheckCircle, X, AlertCircle } from 'lucide-react'
+import { ChevronRight, Minus, Plus, Ticket, ShoppingBag, CreditCard, Clock, CheckCircle, X, AlertCircle, Smartphone } from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext'
 import bookingApi from '../api/bookingApi'
 import paymentApi from '../api/paymentApi'
@@ -40,6 +40,7 @@ export default function Checkout() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [polling, setPolling] = useState(false)
+  const [showBankQr, setShowBankQr] = useState(false)
   const pollRef = useRef(null)
   const startTimeRef = useRef(null)
 
@@ -138,12 +139,8 @@ export default function Checkout() {
     setError('')
     try {
       const res = await bookingApi.createBooking({ showtimeId, seatIds: seats.map(s => s.seatId), combos: selectedCombos.length > 0 ? selectedCombos : null, couponCode: couponCode || null })
-      const id = res.data.bookingId
-      setBookingId(id)
-      await paymentApi.initiateBankPayment(id)
+      setBookingId(res.data.bookingId)
       setStep('payment')
-      setPolling(true)
-      startTimeRef.current = Date.now()
     } catch (err) {
       setError(err.response?.data?.error || 'Đặt vé thất bại, vui lòng thử lại')
     } finally {
@@ -151,20 +148,53 @@ export default function Checkout() {
     }
   }
 
-  const handleRetry = () => { stopPolling(); setStep('review'); setBookingId(null); setError('') }
+  const handleZaloPayPayment = async () => {
+    if (!bookingId) return
+    setLoading(true)
+    setError('')
+    try {
+      const res = await paymentApi.createZaloPayPayment(bookingId)
+      const { orderUrl, appTransId } = res.data
+      setPolling(true)
+      startTimeRef.current = Date.now()
+      window.open(orderUrl, '_blank')
+    } catch (err) {
+      setError(err.response?.data?.error || 'Kết nối ZaloPay thất bại')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleBankPayment = async () => {
+    if (!bookingId) return
+    setLoading(true)
+    setError('')
+    try {
+      await paymentApi.initiateBankPayment(bookingId)
+      setShowBankQr(true)
+      setPolling(true)
+      startTimeRef.current = Date.now()
+    } catch (err) {
+      setError(err.response?.data?.error || 'Khởi tạo thanh toán thất bại')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleRetry = () => { stopPolling(); setStep('review'); setBookingId(null); setShowBankQr(false); setError('') }
   const elapsedSeconds = startTimeRef.current ? Math.floor((Date.now() - startTimeRef.current) / 1000) : 0
 
   if (step === 'payment') {
     const content = `CINEMA${bookingId?.substring(0, 8).toUpperCase()}`
     return (
-      <div className="max-w-7xl mx-auto px-4 py-8">
+      <div className="max-w-3xl mx-auto px-4 py-8">
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="glass-card p-8 space-y-6">
           <div className="text-center">
             <div className="w-16 h-16 rounded-full bg-button-glow flex items-center justify-center mx-auto mb-3">
               <CreditCard size={28} className="text-white" />
             </div>
-            <h1 className="text-2xl font-bold">Chuyển khoản ngân hàng</h1>
-            <p className="text-text-muted text-sm mt-1">Quét mã QR bằng app ngân hàng</p>
+            <h1 className="text-2xl font-bold">Thanh toán</h1>
+            <p className="text-text-muted text-sm mt-1">Chọn phương thức thanh toán</p>
           </div>
 
           {error && (
@@ -179,30 +209,70 @@ export default function Checkout() {
             </div>
           )}
 
-          <div className="flex justify-center py-4">
-            {vietQrUrl ? (
-              <img src={vietQrUrl} alt="QR thanh toán" className="w-56 h-56 rounded-xl shadow-lg shadow-galaxy-purple/20" />
-            ) : (
-              <div className="w-56 h-56 bg-white/5 rounded-xl flex items-center justify-center"><Loading text="Đang tạo mã..." /></div>
+          <div className="space-y-3">
+            <div className="flex justify-between items-center p-4 rounded-xl border border-white/10">
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 rounded-full bg-blue-500/20 flex items-center justify-center">
+                  <Smartphone size={24} className="text-blue-400" />
+                </div>
+                <div>
+                  <p className="font-semibold">ZaloPay</p>
+                  <p className="text-xs text-text-muted">Thanh toán qua ứng dụng ZaloPay</p>
+                </div>
+              </div>
+              <Button onClick={handleZaloPayPayment} disabled={loading || polling} className="shrink-0">
+                {loading ? 'Đang kết nối...' : 'Thanh toán ZaloPay'}
+              </Button>
+            </div>
+
+            {!showBankQr && (
+              <div className="flex justify-between items-center p-4 rounded-xl border border-white/10">
+                <div className="flex items-center gap-3">
+                  <div className="w-12 h-12 rounded-full bg-green-500/20 flex items-center justify-center">
+                    <CreditCard size={24} className="text-green-400" />
+                  </div>
+                  <div>
+                    <p className="font-semibold">Chuyển khoản ngân hàng</p>
+                    <p className="text-xs text-text-muted">Quét mã QR bằng app ngân hàng</p>
+                  </div>
+                </div>
+                <Button onClick={handleBankPayment} disabled={loading || polling} variant="secondary" className="shrink-0">
+                  Chuyển khoản
+                </Button>
+              </div>
             )}
           </div>
 
-          <div className="space-y-3 text-sm">
-            {[
-              { label: 'Ngân hàng', value: bankInfo.bankName },
-              { label: 'Số tài khoản', value: bankInfo.accountNumber.replace(/(\d{4})(?=\d)/g, '$1 ') },
-              { label: 'Chủ tài khoản', value: bankInfo.accountHolder },
-              { label: 'Số tiền', value: `${totalAmount.toLocaleString()}₫`, highlight: true },
-              { label: 'Nội dung', value: content, highlight: true },
-            ].map(item => (
-              <div key={item.label} className={`flex justify-between py-2 ${item.highlight ? '' : 'border-b border-white/5'}`}>
-                <span className="text-text-muted">{item.label}</span>
-                <span className={`font-medium ${item.highlight ? 'text-galaxy-cyan' : 'text-white'}`}>{item.value}</span>
+          {showBankQr && (
+            <>
+              <hr className="border-white/10" />
+              <div className="text-center">
+                <h2 className="font-semibold mb-2">Quét mã QR để chuyển khoản</h2>
               </div>
-            ))}
-          </div>
-
-          {!error && <p className="text-center text-xs text-text-muted">App ngân hàng sẽ tự điền số tiền và nội dung.</p>}
+              <div className="flex justify-center py-2">
+                {vietQrUrl ? (
+                  <img src={vietQrUrl} alt="QR thanh toán" className="w-56 h-56 rounded-xl shadow-lg shadow-galaxy-purple/20" />
+                ) : (
+                  <div className="w-56 h-56 bg-white/5 rounded-xl flex items-center justify-center"><Loading text="Đang tạo mã..." /></div>
+                )}
+              </div>
+              <div className="space-y-3 text-sm">
+                {[
+                  { label: 'Ngân hàng', value: bankInfo.bankName },
+                  { label: 'Số tài khoản', value: bankInfo.accountNumber.replace(/(\d{4})(?=\d)/g, '$1 ') },
+                  { label: 'Chủ tài khoản', value: bankInfo.accountHolder },
+                  { label: 'Số tiền', value: `${totalAmount.toLocaleString()}₫`, highlight: true },
+                  { label: 'Nội dung', value: content, highlight: true },
+                ].map(item => (
+                  <div key={item.label} className={`flex justify-between py-2 ${item.highlight ? '' : 'border-b border-white/5'}`}>
+                    <span className="text-text-muted">{item.label}</span>
+                    <span className={`font-medium ${item.highlight ? 'text-galaxy-cyan' : 'text-white'}`}>{item.value}</span>
+                  </div>
+                ))}
+              </div>
+              <p className="text-center text-xs text-text-muted">App ngân hàng sẽ tự điền số tiền và nội dung.</p>
+            </>
+          )}
 
           {error && <Button onClick={handleRetry} className="w-full">Đặt vé lại</Button>}
         </motion.div>
