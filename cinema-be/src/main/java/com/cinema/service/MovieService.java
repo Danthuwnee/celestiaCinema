@@ -9,7 +9,6 @@ import java.util.stream.Collectors;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -22,7 +21,6 @@ import com.cinema.entity.Showtime;
 import com.cinema.enums.EntityStatus;
 import com.cinema.exception.ResourceNotFoundException;
 import com.cinema.repository.MovieRepository;
-import com.cinema.repository.MovieSpecifications;
 import com.cinema.repository.ShowtimeRepository;
 
 import lombok.RequiredArgsConstructor;
@@ -104,12 +102,11 @@ public class MovieService {
     }
 
     public Page<MovieResponse> searchMovies(String keyword, Pageable pageable) {
-        List<EntityStatus> statuses = List.of(EntityStatus.ACTIVE, EntityStatus.COMING_SOON);
-        Specification<Movie> spec = Specification.where(MovieSpecifications.statusIn(statuses));
-        if (keyword != null && !keyword.trim().isEmpty()) {
-            spec = spec.and(MovieSpecifications.titleContainsAllWords(keyword));
+        List<String> statuses = List.of("ACTIVE", "COMING_SOON");
+        if (keyword == null || keyword.trim().isEmpty()) {
+            return Page.empty(pageable);
         }
-        return movieRepository.findAll(spec, pageable)
+        return movieRepository.searchByTitle(keyword.trim(), statuses, pageable)
                 .map(this::toMovieResponse);
     }
 
