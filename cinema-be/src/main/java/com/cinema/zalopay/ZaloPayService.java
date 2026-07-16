@@ -28,7 +28,8 @@ public class ZaloPayService {
         String appTransId = generateAppTransId();
         long appTime = System.currentTimeMillis();
 
-        String macData = config.getAppId() + "|" + appTransId + "|" + appUserId + "|" + amount + "|" + appTime + "|" + embedData + "|" + "{}";
+        String items = "[]";
+        String macData = config.getAppId() + "|" + appTransId + "|" + appUserId + "|" + amount + "|" + appTime + "|" + embedData + "|" + items;
         String mac = HMACUtil.HMacHexStringEncode(HMACUtil.HMACSHA256, config.getKey1(), macData);
 
         Map<String, Object> order = new HashMap<>();
@@ -39,7 +40,8 @@ public class ZaloPayService {
         order.put("amount", amount);
         order.put("description", description);
         order.put("embed_data", embedData);
-        order.put("item", "{}");
+        order.put("item", items);
+        order.put("bank_code", "");
         order.put("mac", mac);
 
         String body = objectMapper.writeValueAsString(order);
