@@ -3,13 +3,15 @@ package com.cinema.service;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.UUID;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -22,7 +24,6 @@ import com.cinema.entity.Showtime;
 import com.cinema.enums.EntityStatus;
 import com.cinema.exception.ResourceNotFoundException;
 import com.cinema.repository.MovieRepository;
-import com.cinema.repository.MovieSpecifications;
 import com.cinema.repository.ShowtimeRepository;
 
 import lombok.RequiredArgsConstructor;
@@ -105,12 +106,33 @@ public class MovieService {
 
     public Page<MovieResponse> searchMovies(String keyword, Pageable pageable) {
         List<EntityStatus> statuses = List.of(EntityStatus.ACTIVE, EntityStatus.COMING_SOON);
-        Specification<Movie> spec = Specification.where(MovieSpecifications.statusIn(statuses));
-        if (keyword != null && !keyword.trim().isEmpty()) {
-            spec = spec.and(MovieSpecifications.titleContainsAllWords(keyword.trim()));
+        List<Movie> all = movieRepository.findAll();
+
+        List<Movie> matched = all.stream()
+                .filter(m -> statuses.contains(m.getStatus()))
+                .filter(m -> keyword == null || keyword.trim().isEmpty() || matchesAllWords(m.getTitle(), keyword))
+                .toList();
+
+        int start = (int) pageable.getOffset();
+        int end = Math.min(start + pageable.getPageSize(), matched.size());
+        List<Movie> pageContent = start >= matched.size() ? List.of() : matched.subList(start, end);
+
+        return new PageImpl<>(
+                pageContent.stream().map(this::toMovieResponse).toList(),
+                pageable,
+                matched.size()
+        );
+    }
+
+    private boolean matchesAllWords(String title, String keyword) {
+        String[] words = keyword.trim().toLowerCase(Locale.ROOT).split("\\s+");
+        String lowerTitle = title.toLowerCase(Locale.ROOT);
+        for (String word : words) {
+            if (!lowerTitle.matches(".*\\b" + Pattern.quote(word) + "\\b.*")) {
+                return false;
+            }
         }
-        return movieRepository.findAll(spec, pageable)
-                .map(this::toMovieResponse);
+        return true;
     }
 
     public Page<MovieResponse> filterByGenres(List<UUID> genreIds, Pageable pageable) {
