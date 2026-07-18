@@ -1,5 +1,5 @@
-import { useState, useEffect, useMemo } from 'react'
-import { useQuery, useQueryClient } from '@tanstack/react-query'
+import { useState, useEffect, useMemo, useDeferredValue } from 'react'
+import { useQuery, useQueryClient, keepPreviousData } from '@tanstack/react-query'
 import { motion } from 'framer-motion'
 import { Clock, XCircle, Plus, ChevronLeft, ChevronRight, Trash2, Search } from 'lucide-react'
 import adminApi from '../../api/adminApi'
@@ -13,16 +13,9 @@ export default function AdminShowtimes() {
   const [currentPage, setCurrentPage] = useState(0)
   const [totalPages, setTotalPages] = useState(0)
   const [keyword, setKeyword] = useState('')
-  const [searchKeyword, setSearchKeyword] = useState('')
+  const searchKeyword = useDeferredValue(keyword)
   const pageSize = 12
 
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setSearchKeyword(keyword)
-      if (keyword !== searchKeyword) setCurrentPage(0)
-    }, 300)
-    return () => clearTimeout(timer)
-  }, [keyword])
   const [form, setForm] = useState({ movieId: '', roomId: '', date: '', basePrice: 75000 })
   const [selectedIds, setSelectedIds] = useState(new Set())
   const [slots, setSlots] = useState([])
@@ -58,7 +51,7 @@ export default function AdminShowtimes() {
       setTotalPages(r.data?.totalPages || 0)
       return r.data
     }),
-    keepPreviousData: true,
+    placeholderData: keepPreviousData,
   })
 
   const { data: moviesData } = useQuery({
@@ -156,8 +149,6 @@ export default function AdminShowtimes() {
     await adminApi.cancelShowtime(id)
     queryClient.invalidateQueries({ queryKey: ['admin', 'showtimes'] })
   }
-
-  if (isLoading) return <Loading />
 
   return (
     <div>
@@ -264,6 +255,8 @@ export default function AdminShowtimes() {
       </Modal>
 
       <div className="glass-card overflow-hidden">
+        {isLoading ? <Loading /> : (
+        <>
         {selectedIds.size > 0 && (
           <div className="flex items-center justify-between px-4 py-3 bg-galaxy-purple/10 border-b border-galaxy-purple/20">
             <span className="text-sm text-galaxy-cyan font-medium">Đã chọn {selectedIds.size} suất chiếu</span>
@@ -319,6 +312,8 @@ export default function AdminShowtimes() {
             })}
           </tbody>
         </table>
+        </>
+        )}
       </div>
 
       {totalPages > 1 && (

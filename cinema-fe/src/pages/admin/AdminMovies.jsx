@@ -1,8 +1,8 @@
-import { useState, useEffect } from 'react'
+import { useState, useDeferredValue } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import { useQuery, useQueryClient } from '@tanstack/react-query'
+import { useQuery, useQueryClient, keepPreviousData } from '@tanstack/react-query'
 import { motion } from 'framer-motion'
 import { Plus, Pencil, Trash2, Film, ChevronLeft, ChevronRight, Search } from 'lucide-react'
 import movieApi from '../../api/movieApi'
@@ -18,17 +18,9 @@ export default function AdminMovies() {
   const [currentPage, setCurrentPage] = useState(0)
   const [totalPages, setTotalPages] = useState(0)
   const [keyword, setKeyword] = useState('')
-  const [searchKeyword, setSearchKeyword] = useState('')
+  const searchKeyword = useDeferredValue(keyword)
   const pageSize = 12
   const today = new Date().toISOString().split('T')[0]
-
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setSearchKeyword(keyword)
-      if (keyword !== searchKeyword) setCurrentPage(0)
-    }, 300)
-    return () => clearTimeout(timer)
-  }, [keyword])
 
   const movieSchema = z.object({
     title: z.string().min(1, 'Vui lòng nhập tên phim'),
@@ -65,7 +57,7 @@ export default function AdminMovies() {
       setTotalPages(r.data?.totalPages || 0)
       return r.data
     }),
-    keepPreviousData: true,
+    placeholderData: keepPreviousData,
   })
 
   const { data: genreList } = useQuery({
@@ -111,8 +103,6 @@ export default function AdminMovies() {
     await adminApi.deleteMovie(id)
     queryClient.invalidateQueries({ queryKey: ['admin', 'movies'] })
   }
-
-  if (isLoading) return <Loading />
 
   return (
     <div>
@@ -219,6 +209,7 @@ export default function AdminMovies() {
       </Modal>
 
       <div className="glass-card overflow-hidden">
+        {isLoading ? <Loading /> : (
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b border-white/10 text-text-muted">
@@ -244,6 +235,7 @@ export default function AdminMovies() {
             ))}
           </tbody>
         </table>
+        )}
       </div>
 
       {totalPages > 1 && (
