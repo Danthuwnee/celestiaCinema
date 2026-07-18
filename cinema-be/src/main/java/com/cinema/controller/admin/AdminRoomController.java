@@ -22,6 +22,8 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.cinema.dto.request.CreateRoomRequest;
 import com.cinema.dto.request.UpdateRoomRequest;
+import com.cinema.dto.response.RoomResponse;
+import com.cinema.dto.response.SeatTypeResponse;
 import com.cinema.entity.Room;
 import com.cinema.entity.Seat;
 import com.cinema.entity.SeatType;
@@ -48,8 +50,10 @@ public class AdminRoomController {
     private final BookingSeatRepository bookingSeatRepository;
 
     @GetMapping
-    public ResponseEntity<List<Room>> getAllRooms() {
-        return ResponseEntity.ok(roomRepository.findAll());
+    public ResponseEntity<List<RoomResponse>> getAllRooms() {
+        List<Room> rooms = roomRepository.findAll();
+        List<RoomResponse> dtos = rooms.stream().map(this::toRoomResponse).toList();
+        return ResponseEntity.ok(dtos);
     }
 
     @GetMapping("/{roomId}/seats")
@@ -64,12 +68,21 @@ public class AdminRoomController {
     }
 
     @GetMapping("/seat-types")
-    public ResponseEntity<List<SeatType>> getSeatTypes() {
-        return ResponseEntity.ok(seatTypeRepository.findAll());
+    public ResponseEntity<List<SeatTypeResponse>> getSeatTypes() {
+        List<SeatType> types = seatTypeRepository.findAll();
+        List<SeatTypeResponse> dtos = types.stream()
+                .map(t -> SeatTypeResponse.builder()
+                        .seatTypeId(t.getSeatTypeId())
+                        .typeName(t.getTypeName())
+                        .priceMultiplier(t.getPriceMultiplier())
+                        .colorHex(t.getColorHex())
+                        .build())
+                .toList();
+        return ResponseEntity.ok(dtos);
     }
 
     @PostMapping
-    public ResponseEntity<Room> createRoom(@Valid @RequestBody CreateRoomRequest request) {
+    public ResponseEntity<RoomResponse> createRoom(@Valid @RequestBody CreateRoomRequest request) {
         Room room = Room.builder()
                 .roomName(request.getRoomName())
                 .totalRows(request.getTotalRows())
@@ -79,12 +92,12 @@ public class AdminRoomController {
                 .build();
         room = roomRepository.save(room);
         generateSeats(room, request.getRowSeatTypes());
-        return ResponseEntity.ok(room);
+        return ResponseEntity.ok(toRoomResponse(room));
     }
 
     @PutMapping("/{id}")
     @Transactional
-    public ResponseEntity<Room> updateRoom(@PathVariable UUID id, @Valid @RequestBody UpdateRoomRequest request) {
+    public ResponseEntity<RoomResponse> updateRoom(@PathVariable UUID id, @Valid @RequestBody UpdateRoomRequest request) {
         Room existing = roomRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Room not found"));
         boolean hasStructuralChanges = request.getRoomName() != null || request.getTotalRows() != null
@@ -110,7 +123,7 @@ public class AdminRoomController {
             generateSeats(existing, request.getRowSeatTypes());
         }
 
-        return ResponseEntity.ok(roomRepository.save(existing));
+        return ResponseEntity.ok(toRoomResponse(existing));
     }
 
     @DeleteMapping("/{id}")
@@ -133,6 +146,17 @@ public class AdminRoomController {
         }
         roomRepository.delete(room);
         return ResponseEntity.noContent().build();
+    }
+
+    private RoomResponse toRoomResponse(Room room) {
+        return RoomResponse.builder()
+                .roomId(room.getRoomId())
+                .roomName(room.getRoomName())
+                .totalRows(room.getTotalRows())
+                .totalColumns(room.getTotalColumns())
+                .aisleAfterColumns(room.getAisleAfterColumns())
+                .status(room.getStatus().name())
+                .build();
     }
 
     private void generateSeats(Room room, Map<String, UUID> rowSeatTypes) {

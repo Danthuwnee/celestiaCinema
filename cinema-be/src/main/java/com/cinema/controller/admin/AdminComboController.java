@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.cinema.dto.request.CreateComboRequest;
 import com.cinema.dto.request.UpdateComboRequest;
+import com.cinema.dto.response.ComboResponse;
 import com.cinema.entity.Combo;
 import com.cinema.enums.EntityStatus;
 import com.cinema.exception.ResourceNotFoundException;
@@ -32,12 +33,13 @@ public class AdminComboController {
     private final ComboRepository comboRepository;
 
     @GetMapping
-    public ResponseEntity<Page<Combo>> getAllCombos(Pageable pageable) {
-        return ResponseEntity.ok(comboRepository.findByStatus(EntityStatus.ACTIVE, pageable));
+    public ResponseEntity<Page<ComboResponse>> getAllCombos(Pageable pageable) {
+        Page<Combo> page = comboRepository.findByStatus(EntityStatus.ACTIVE, pageable);
+        return ResponseEntity.ok(page.map(this::toComboResponse));
     }
 
     @PostMapping
-    public ResponseEntity<Combo> createCombo(@Valid @RequestBody CreateComboRequest request) {
+    public ResponseEntity<ComboResponse> createCombo(@Valid @RequestBody CreateComboRequest request) {
         Combo combo = Combo.builder()
                 .comboName(request.getComboName())
                 .description(request.getDescription())
@@ -45,18 +47,29 @@ public class AdminComboController {
                 .imageUrl(request.getImageUrl())
                 .status(EntityStatus.ACTIVE)
                 .build();
-        return ResponseEntity.ok(comboRepository.save(combo));
+        return ResponseEntity.ok(toComboResponse(comboRepository.save(combo)));
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<Combo> updateCombo(@PathVariable UUID id, @Valid @RequestBody UpdateComboRequest request) {
+    public ResponseEntity<ComboResponse> updateCombo(@PathVariable UUID id, @Valid @RequestBody UpdateComboRequest request) {
         Combo existing = comboRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Combo not found"));
         if (request.getComboName() != null) existing.setComboName(request.getComboName());
         if (request.getDescription() != null) existing.setDescription(request.getDescription());
         if (request.getPrice() != null) existing.setPrice(request.getPrice());
         if (request.getImageUrl() != null) existing.setImageUrl(request.getImageUrl());
-        return ResponseEntity.ok(comboRepository.save(existing));
+        return ResponseEntity.ok(toComboResponse(comboRepository.save(existing)));
+    }
+
+    private ComboResponse toComboResponse(Combo c) {
+        return ComboResponse.builder()
+                .comboId(c.getComboId())
+                .comboName(c.getComboName())
+                .description(c.getDescription())
+                .price(c.getPrice())
+                .imageUrl(c.getImageUrl())
+                .status(c.getStatus().name())
+                .build();
     }
 
     @DeleteMapping("/{id}")

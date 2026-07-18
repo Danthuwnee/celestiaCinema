@@ -7,6 +7,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.cinema.dto.response.ComboResponse;
 import com.cinema.entity.Combo;
 import com.cinema.enums.EntityStatus;
 import com.cinema.repository.ComboRepository;
@@ -21,7 +22,18 @@ public class ComboController {
     private final ComboRepository comboRepository;
 
     @GetMapping
-    public ResponseEntity<List<Combo>> getActiveCombos() {
-        return ResponseEntity.ok(comboRepository.findByStatus(EntityStatus.ACTIVE));
+    public ResponseEntity<List<ComboResponse>> getActiveCombos() {
+        List<Combo> combos = comboRepository.findByStatus(EntityStatus.ACTIVE);
+        List<ComboResponse> dtos = combos.stream()
+                .map(c -> ComboResponse.builder()
+                        .comboId(c.getComboId())
+                        .comboName(c.getComboName())
+                        .description(c.getDescription())
+                        .price(c.getPrice())
+                        .imageUrl(c.getImageUrl())
+                        .status(c.getStatus().name())
+                        .build())
+                .toList();
+        return ResponseEntity.ok(dtos);
     }
 }

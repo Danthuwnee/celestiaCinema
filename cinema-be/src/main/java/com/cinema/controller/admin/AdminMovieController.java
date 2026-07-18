@@ -56,13 +56,14 @@ public class AdminMovieController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<Movie> getMovie(@PathVariable UUID id) {
-        return ResponseEntity.ok(movieRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Movie not found")));
+    public ResponseEntity<MovieResponse> getMovie(@PathVariable UUID id) {
+        Movie movie = movieRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Movie not found"));
+        return ResponseEntity.ok(movieService.toMovieResponse(movie));
     }
 
     @PostMapping
-    public ResponseEntity<Movie> createMovie(@Valid @RequestBody CreateMovieRequest request) {
+    public ResponseEntity<MovieResponse> createMovie(@Valid @RequestBody CreateMovieRequest request) {
         if (request.getShowingEndDate() != null && request.getShowingStartDate() != null
                 && request.getShowingEndDate().isBefore(request.getShowingStartDate())) {
             throw new BadRequestException("Ngày kết thúc phải sau ngày khởi chiếu");
@@ -85,11 +86,12 @@ public class AdminMovieController {
             List<Genre> genres = genreRepository.findAllById(request.getGenreIds());
             movie.setGenres(new HashSet<>(genres));
         }
-        return ResponseEntity.ok(movieRepository.save(movie));
+        Movie saved = movieRepository.save(movie);
+        return ResponseEntity.ok(movieService.toMovieResponse(saved));
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<Movie> updateMovie(@PathVariable UUID id, @Valid @RequestBody UpdateMovieRequest request) {
+    public ResponseEntity<MovieResponse> updateMovie(@PathVariable UUID id, @Valid @RequestBody UpdateMovieRequest request) {
         Movie existing = movieRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Movie not found"));
         if (request.getTitle() != null) existing.setTitle(request.getTitle());
@@ -113,11 +115,12 @@ public class AdminMovieController {
             List<Genre> genres = genreRepository.findAllById(request.getGenreIds());
             existing.setGenres(new HashSet<>(genres));
         }
-        return ResponseEntity.ok(movieRepository.save(existing));
+        Movie saved = movieRepository.save(existing);
+        return ResponseEntity.ok(movieService.toMovieResponse(saved));
     }
 
     @PutMapping("/{id}/status")
-    public ResponseEntity<Movie> updateMovieStatus(
+    public ResponseEntity<MovieResponse> updateMovieStatus(
             @PathVariable UUID id,
             @RequestParam EntityStatus status) {
         Movie movie = movieRepository.findById(id)
@@ -130,7 +133,8 @@ public class AdminMovieController {
             }
         }
         movie.setStatus(status);
-        return ResponseEntity.ok(movieRepository.save(movie));
+        Movie saved = movieRepository.save(movie);
+        return ResponseEntity.ok(movieService.toMovieResponse(saved));
     }
 
     @DeleteMapping("/{id}")

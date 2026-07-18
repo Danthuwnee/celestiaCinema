@@ -160,7 +160,7 @@ public class MovieService {
                 .build();
     }
 
-    private MovieResponse toMovieResponse(Movie movie) {
+    public MovieResponse toMovieResponse(Movie movie) {
         return MovieResponse.builder()
                 .movieId(movie.getMovieId())
                 .title(movie.getTitle())

@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.cinema.dto.request.CreateCouponRequest;
 import com.cinema.dto.request.UpdateCouponRequest;
+import com.cinema.dto.response.AdminCouponResponse;
 import com.cinema.entity.Coupon;
 import com.cinema.enums.EntityStatus;
 import com.cinema.exception.ResourceNotFoundException;
@@ -32,12 +33,13 @@ public class AdminCouponController {
     private final CouponRepository couponRepository;
 
     @GetMapping
-    public ResponseEntity<Page<Coupon>> getAllCoupons(Pageable pageable) {
-        return ResponseEntity.ok(couponRepository.findByStatus(EntityStatus.ACTIVE, pageable));
+    public ResponseEntity<Page<AdminCouponResponse>> getAllCoupons(Pageable pageable) {
+        Page<Coupon> page = couponRepository.findByStatus(EntityStatus.ACTIVE, pageable);
+        return ResponseEntity.ok(page.map(this::toAdminCouponResponse));
     }
 
     @PostMapping
-    public ResponseEntity<Coupon> createCoupon(@Valid @RequestBody CreateCouponRequest request) {
+    public ResponseEntity<AdminCouponResponse> createCoupon(@Valid @RequestBody CreateCouponRequest request) {
         Coupon coupon = Coupon.builder()
                 .code(request.getCode())
                 .discountType(request.getDiscountType())
@@ -47,11 +49,11 @@ public class AdminCouponController {
                 .expiredAt(request.getExpiredAt())
                 .status(EntityStatus.ACTIVE)
                 .build();
-        return ResponseEntity.ok(couponRepository.save(coupon));
+        return ResponseEntity.ok(toAdminCouponResponse(couponRepository.save(coupon)));
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<Coupon> updateCoupon(@PathVariable UUID id, @Valid @RequestBody UpdateCouponRequest request) {
+    public ResponseEntity<AdminCouponResponse> updateCoupon(@PathVariable UUID id, @Valid @RequestBody UpdateCouponRequest request) {
         Coupon existing = couponRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Coupon not found"));
         if (request.getCode() != null) existing.setCode(request.getCode());
@@ -60,7 +62,20 @@ public class AdminCouponController {
         if (request.getQuantity() != null) existing.setQuantity(request.getQuantity());
         if (request.getMinOrderValue() != null) existing.setMinOrderValue(request.getMinOrderValue());
         if (request.getExpiredAt() != null) existing.setExpiredAt(request.getExpiredAt());
-        return ResponseEntity.ok(couponRepository.save(existing));
+        return ResponseEntity.ok(toAdminCouponResponse(couponRepository.save(existing)));
+    }
+
+    private AdminCouponResponse toAdminCouponResponse(Coupon c) {
+        return AdminCouponResponse.builder()
+                .couponId(c.getCouponId())
+                .code(c.getCode())
+                .discountType(c.getDiscountType().name())
+                .discountValue(c.getDiscountValue())
+                .quantity(c.getQuantity())
+                .minOrderValue(c.getMinOrderValue())
+                .expiredAt(c.getExpiredAt())
+                .status(c.getStatus().name())
+                .build();
     }
 
     @DeleteMapping("/{id}")
