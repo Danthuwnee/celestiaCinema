@@ -18,6 +18,7 @@ export default function Home() {
   const navigate = useNavigate()
   const activeTab = searchParams.get('tab') || 'now-showing'
   const [movies, setMovies] = useState([])
+  const [heroMovies, setHeroMovies] = useState([])
   const [genres, setGenres] = useState([])
   const [selectedGenres, setSelectedGenres] = useState([])
   const [searchQuery, setSearchQuery] = useState('')
@@ -37,6 +38,12 @@ export default function Home() {
 
   useEffect(() => {
     movieApi.getGenres().then(r => setGenres(r.data)).catch(() => {})
+  }, [])
+
+  useEffect(() => {
+    movieApi.getNowShowing({ page: 0, size: 10 })
+      .then(r => setHeroMovies(r.data?.content || []))
+      .catch(() => {})
   }, [])
 
   useEffect(() => {
@@ -72,7 +79,6 @@ export default function Home() {
         const data = r.data?.content || []
         setMovies(data)
         setTotalPages(r.data?.totalPages || 0)
-        setHeroIndex(0)
       })
       .catch(() => setMovies([]))
       .finally(() => setLoading(false))
@@ -80,8 +86,8 @@ export default function Home() {
 
   const heroSlides = useMemo(() => {
     if (activeTab === 'schedule') return []
-    return movies.map(m => ({ type: 'movie', data: m }))
-  }, [movies, activeTab])
+    return heroMovies.map(m => ({ type: 'movie', data: m }))
+  }, [heroMovies, activeTab])
 
   useEffect(() => {
     if (heroSlides.length <= 1) return
