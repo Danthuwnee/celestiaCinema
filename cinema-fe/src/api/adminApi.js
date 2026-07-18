@@ -5,6 +5,7 @@ const adminApi = {
   createMovie: (data) => axiosClient.post('/admin/movies', data),
   updateMovie: (id, data) => axiosClient.put(`/admin/movies/${id}`, data),
   deleteMovie: (id) => axiosClient.delete(`/admin/movies/${id}`),
+  updateMovieStatus: (id, status) => axiosClient.put(`/admin/movies/${id}/status?status=${status}`),
 
   getRooms: () => axiosClient.get('/admin/rooms'),
   getSeatTypes: () => axiosClient.get('/admin/rooms/seat-types'),

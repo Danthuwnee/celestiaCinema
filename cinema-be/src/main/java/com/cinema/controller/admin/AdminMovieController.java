@@ -1,5 +1,6 @@
 package com.cinema.controller.admin;
 
+import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.List;
 import java.util.UUID;
@@ -22,11 +23,13 @@ import com.cinema.dto.request.UpdateMovieRequest;
 import com.cinema.dto.response.MovieResponse;
 import com.cinema.entity.Genre;
 import com.cinema.entity.Movie;
+import com.cinema.entity.Showtime;
 import com.cinema.enums.EntityStatus;
 import com.cinema.exception.BadRequestException;
 import com.cinema.exception.ResourceNotFoundException;
 import com.cinema.repository.GenreRepository;
 import com.cinema.repository.MovieRepository;
+import com.cinema.repository.ShowtimeRepository;
 import com.cinema.service.MovieService;
 
 import jakarta.validation.Valid;
@@ -40,6 +43,7 @@ public class AdminMovieController {
     private final MovieRepository movieRepository;
     private final MovieService movieService;
     private final GenreRepository genreRepository;
+    private final ShowtimeRepository showtimeRepository;
 
     @GetMapping
     public ResponseEntity<Page<MovieResponse>> getAllMovies(
@@ -112,10 +116,32 @@ public class AdminMovieController {
         return ResponseEntity.ok(movieRepository.save(existing));
     }
 
+    @PutMapping("/{id}/status")
+    public ResponseEntity<Movie> updateMovieStatus(
+            @PathVariable UUID id,
+            @RequestParam EntityStatus status) {
+        Movie movie = movieRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Movie not found"));
+        if (status == EntityStatus.INACTIVE) {
+            List<Showtime> activeShowtimes = showtimeRepository
+                    .findByMovieMovieIdAndStatusOrderByStartTimeAsc(id, EntityStatus.ACTIVE);
+            if (!activeShowtimes.isEmpty()) {
+                throw new BadRequestException("Không thể chuyển sang INACTIVE vì phim còn suất chiếu đang hoạt động");
+            }
+        }
+        movie.setStatus(status);
+        return ResponseEntity.ok(movieRepository.save(movie));
+    }
+
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> softDeleteMovie(@PathVariable UUID id) {
         Movie movie = movieRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Movie not found"));
+        List<Showtime> activeShowtimes = showtimeRepository
+                .findByMovieMovieIdAndStatusOrderByStartTimeAsc(id, EntityStatus.ACTIVE);
+        if (!activeShowtimes.isEmpty()) {
+            throw new BadRequestException("Không thể xóa phim vì còn suất chiếu đang hoạt động");
+        }
         movie.setStatus(EntityStatus.INACTIVE);
         movieRepository.save(movie);
         return ResponseEntity.noContent().build();

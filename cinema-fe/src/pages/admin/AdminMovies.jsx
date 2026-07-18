@@ -100,8 +100,22 @@ export default function AdminMovies() {
 
   const handleDelete = async (id) => {
     if (!window.confirm('Xóa phim này?')) return
-    await adminApi.deleteMovie(id)
-    queryClient.invalidateQueries({ queryKey: ['admin', 'movies'] })
+    try {
+      await adminApi.deleteMovie(id)
+      queryClient.invalidateQueries({ queryKey: ['admin', 'movies'] })
+    } catch (err) {
+      alert(err.response?.data?.error || err.response?.data || 'Không thể xóa phim')
+    }
+  }
+
+  const handleStatusToggle = async (movie) => {
+    const nextStatus = movie.status === 'ACTIVE' ? 'INACTIVE' : 'ACTIVE'
+    try {
+      await adminApi.updateMovieStatus(movie.movieId || movie.id, nextStatus)
+      queryClient.invalidateQueries({ queryKey: ['admin', 'movies'] })
+    } catch (err) {
+      alert(err.response?.data?.error || err.response?.data || 'Không thể đổi trạng thái')
+    }
   }
 
   return (
@@ -226,7 +240,21 @@ export default function AdminMovies() {
                 <td className="p-4 font-medium">{m.title}</td>
                 <td className="p-4 hidden md:table-cell text-text-muted">{m.duration} phút</td>
                 <td className="p-4 hidden md:table-cell text-text-muted">{m.language}</td>
-                <td className="p-4 hidden lg:table-cell"><span className={`px-2 py-0.5 rounded-full text-xs ${m.status === 'ACTIVE' ? 'bg-green-500/20 text-green-400' : 'bg-blue-500/20 text-blue-400'}`}>{m.status}</span></td>
+                <td className="p-4 hidden lg:table-cell">
+                  <button
+                    onClick={() => handleStatusToggle(m)}
+                    title={m.status === 'ACTIVE' ? 'Click để chuyển sang INACTIVE' : 'Click để chuyển sang ACTIVE'}
+                    className={`px-2 py-0.5 rounded-full text-xs font-medium cursor-pointer transition-all ${
+                      m.status === 'ACTIVE'
+                        ? 'bg-green-500/20 text-green-400 hover:bg-green-500/30'
+                        : m.status === 'INACTIVE'
+                          ? 'bg-red-500/20 text-red-400 hover:bg-red-500/30'
+                          : 'bg-blue-500/20 text-blue-400 hover:bg-blue-500/30'
+                    }`}
+                  >
+                    {m.status}
+                  </button>
+                </td>
                 <td className="p-4 text-right flex items-center justify-end gap-2">
                   <button onClick={() => handleEdit(m)} className="text-text-muted hover:text-white transition-colors"><Pencil size={16} /></button>
                   <button onClick={() => handleDelete(m.movieId || m.id)} className="text-red-400 hover:text-red-300 transition-colors"><Trash2 size={16} /></button>
