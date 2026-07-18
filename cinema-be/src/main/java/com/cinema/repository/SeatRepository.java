@@ -22,6 +22,9 @@ public interface SeatRepository extends JpaRepository<Seat, UUID> {
     @Query("SELECT s FROM Seat s WHERE s.room.roomId = :roomId AND s.status = 'ACTIVE' ORDER BY s.rowLabel, s.seatNumber")
     List<Seat> findActiveSeatsByRoom(@Param("roomId") UUID roomId);
 
+    @Query("SELECT DISTINCT s.rowLabel, s.seatType.seatTypeId FROM Seat s WHERE s.room.roomId = :roomId AND s.status = 'ACTIVE'")
+    List<Object[]> findDistinctRowSeatTypesByRoomId(@Param("roomId") UUID roomId);
+
     long countByRoomRoomId(UUID roomId);
 
     void deleteByRoomRoomId(UUID roomId);

@@ -1,5 +1,6 @@
 package com.cinema.dto.response;
 
+import java.util.Map;
 import java.util.UUID;
 
 import lombok.AllArgsConstructor;
@@ -19,4 +20,5 @@ public class RoomResponse {
     private Integer totalColumns;
     private String aisleAfterColumns;
     private String status;
+    private Map<String, UUID> rowSeatTypes;
 }

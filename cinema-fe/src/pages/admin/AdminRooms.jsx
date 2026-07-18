@@ -184,8 +184,6 @@ export default function AdminRooms() {
   const [editForm, setEditForm] = useState({ roomName: '', totalRows: 5, totalColumns: 10, aisleAfterColumns: '4' })
   const [editRowSeatTypes, setEditRowSeatTypes] = useState({})
   const [viewRoom, setViewRoom] = useState(null)
-  const [roomSeatTypesMap, setRoomSeatTypesMap] = useState({})
-
   const { data: rooms, isLoading } = useQuery({
     queryKey: ['admin', 'rooms'],
     queryFn: () => adminApi.getRooms().then(r => r.data),
@@ -227,20 +225,6 @@ export default function AdminRooms() {
       return next
     })
   }, [editForm.totalRows, seatTypes, editModal])
-
-  useEffect(() => {
-    if (!rooms?.length) return
-    const fetchAll = rooms.map(r =>
-      adminApi.getRoomSeats(r.roomId || r.id)
-        .then(res => ({ id: r.roomId || r.id, types: res.data }))
-        .catch(() => ({ id: r.roomId || r.id, types: {} }))
-    )
-    Promise.all(fetchAll).then(results => {
-      const map = {}
-      results.forEach(r => { map[r.id] = r.types })
-      setRoomSeatTypesMap(map)
-    })
-  }, [rooms])
 
   const handleSubmit = async (e) => {
     e.preventDefault()
@@ -287,19 +271,7 @@ export default function AdminRooms() {
       totalColumns: room.totalColumns,
       aisleAfterColumns: room.aisleAfterColumns || '4',
     })
-    try {
-      const res = await adminApi.getRoomSeats(room.roomId || room.id)
-      setEditRowSeatTypes(res.data)
-    } catch {
-      if (seatTypes?.length) {
-        const defaultId = seatTypes[0].seatTypeId
-        const types = {}
-        for (let i = 0; i < room.totalRows; i++) {
-          types[String.fromCharCode(65 + i)] = defaultId
-        }
-        setEditRowSeatTypes(types)
-      }
-    }
+    setEditRowSeatTypes(room.rowSeatTypes || {})
     setEditModal(true)
   }
 
@@ -529,7 +501,7 @@ export default function AdminRooms() {
               cols={viewRoom.totalColumns}
               aisleAfterColumns={viewRoom.aisleAfterColumns || ''}
               seatTypes={seatTypes}
-              rowSeatTypes={roomSeatTypesMap[viewRoom.roomId || viewRoom.id] || {}}
+              rowSeatTypes={viewRoom.rowSeatTypes || {}}
               compact={false}
             />
             <div className="flex items-center gap-3 mt-4">
@@ -581,7 +553,7 @@ export default function AdminRooms() {
                 cols={room.totalColumns}
                 aisleAfterColumns={room.aisleAfterColumns || ''}
                 seatTypes={seatTypes}
-                rowSeatTypes={roomSeatTypesMap[room.roomId || room.id] || {}}
+                rowSeatTypes={room.rowSeatTypes || {}}
                 compact={true}
               />
             </div>

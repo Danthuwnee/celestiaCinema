@@ -2,6 +2,7 @@ package com.cinema.controller.admin;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -52,7 +53,14 @@ public class AdminRoomController {
     @GetMapping
     public ResponseEntity<List<RoomResponse>> getAllRooms() {
         List<Room> rooms = roomRepository.findAll();
-        List<RoomResponse> dtos = rooms.stream().map(this::toRoomResponse).toList();
+        List<RoomResponse> dtos = rooms.stream().map(r -> {
+            Map<String, UUID> rowTypes = new HashMap<>();
+            List<Object[]> rows = seatRepository.findDistinctRowSeatTypesByRoomId(r.getRoomId());
+            for (Object[] o : rows) {
+                rowTypes.put((String) o[0], (UUID) o[1]);
+            }
+            return toRoomResponse(r, rowTypes);
+        }).toList();
         return ResponseEntity.ok(dtos);
     }
 
@@ -92,7 +100,7 @@ public class AdminRoomController {
                 .build();
         room = roomRepository.save(room);
         generateSeats(room, request.getRowSeatTypes());
-        return ResponseEntity.ok(toRoomResponse(room));
+        return ResponseEntity.ok(toRoomResponse(room, request.getRowSeatTypes() != null ? request.getRowSeatTypes() : new HashMap<>()));
     }
 
     @PutMapping("/{id}")
@@ -113,6 +121,7 @@ public class AdminRoomController {
         if (request.getStatus() != null) existing.setStatus(EntityStatus.valueOf(request.getStatus()));
         existing = roomRepository.save(existing);
 
+        Map<String, UUID> rowSeatTypes;
         if (request.getRowSeatTypes() != null) {
             List<Seat> oldSeats = seatRepository.findByRoomRoomIdOrderByRowLabelAscSeatNumberAsc(id);
             List<UUID> oldSeatIds = oldSeats.stream().map(Seat::getSeatId).collect(Collectors.toList());
@@ -121,9 +130,16 @@ public class AdminRoomController {
                 seatRepository.deleteSeatsByRoomId(id);
             }
             generateSeats(existing, request.getRowSeatTypes());
+            rowSeatTypes = request.getRowSeatTypes();
+        } else {
+            rowSeatTypes = new HashMap<>();
+            List<Object[]> rows = seatRepository.findDistinctRowSeatTypesByRoomId(id);
+            for (Object[] o : rows) {
+                rowSeatTypes.put((String) o[0], (UUID) o[1]);
+            }
         }
 
-        return ResponseEntity.ok(toRoomResponse(existing));
+        return ResponseEntity.ok(toRoomResponse(existing, rowSeatTypes));
     }
 
     @DeleteMapping("/{id}")
@@ -148,7 +164,7 @@ public class AdminRoomController {
         return ResponseEntity.noContent().build();
     }
 
-    private RoomResponse toRoomResponse(Room room) {
+    private RoomResponse toRoomResponse(Room room, Map<String, UUID> rowSeatTypes) {
         return RoomResponse.builder()
                 .roomId(room.getRoomId())
                 .roomName(room.getRoomName())
@@ -156,6 +172,7 @@ public class AdminRoomController {
                 .totalColumns(room.getTotalColumns())
                 .aisleAfterColumns(room.getAisleAfterColumns())
                 .status(room.getStatus().name())
+                .rowSeatTypes(rowSeatTypes)
                 .build();
     }
 
