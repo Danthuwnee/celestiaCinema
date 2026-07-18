@@ -13,7 +13,16 @@ export default function AdminShowtimes() {
   const [currentPage, setCurrentPage] = useState(0)
   const [totalPages, setTotalPages] = useState(0)
   const [keyword, setKeyword] = useState('')
+  const [searchKeyword, setSearchKeyword] = useState('')
   const pageSize = 12
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setSearchKeyword(keyword)
+      if (keyword !== searchKeyword) setCurrentPage(0)
+    }, 300)
+    return () => clearTimeout(timer)
+  }, [keyword])
   const [form, setForm] = useState({ movieId: '', roomId: '', date: '', basePrice: 75000 })
   const [selectedIds, setSelectedIds] = useState(new Set())
   const [slots, setSlots] = useState([])
@@ -44,8 +53,8 @@ export default function AdminShowtimes() {
   }, [form.movieId, form.roomId, form.date])
 
   const { data, isLoading } = useQuery({
-    queryKey: ['admin', 'showtimes', currentPage, keyword],
-    queryFn: () => adminApi.getShowtimes({ page: currentPage, size: pageSize, movieTitle: keyword || undefined }).then(r => {
+    queryKey: ['admin', 'showtimes', currentPage, searchKeyword],
+    queryFn: () => adminApi.getShowtimes({ page: currentPage, size: pageSize, movieTitle: searchKeyword || undefined }).then(r => {
       setTotalPages(r.data?.totalPages || 0)
       return r.data
     }),
@@ -162,7 +171,7 @@ export default function AdminShowtimes() {
         <input
           type="text"
           value={keyword}
-          onChange={(e) => { setKeyword(e.target.value); setCurrentPage(0) }}
+          onChange={(e) => setKeyword(e.target.value)}
           placeholder="Tìm kiếm theo tên phim..."
           className="input-field pl-9 w-full"
         />

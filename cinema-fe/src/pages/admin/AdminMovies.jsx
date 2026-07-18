@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
@@ -18,8 +18,17 @@ export default function AdminMovies() {
   const [currentPage, setCurrentPage] = useState(0)
   const [totalPages, setTotalPages] = useState(0)
   const [keyword, setKeyword] = useState('')
+  const [searchKeyword, setSearchKeyword] = useState('')
   const pageSize = 12
   const today = new Date().toISOString().split('T')[0]
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setSearchKeyword(keyword)
+      if (keyword !== searchKeyword) setCurrentPage(0)
+    }, 300)
+    return () => clearTimeout(timer)
+  }, [keyword])
 
   const movieSchema = z.object({
     title: z.string().min(1, 'Vui lòng nhập tên phim'),
@@ -51,8 +60,8 @@ export default function AdminMovies() {
   const showingStartDate = watch('showingStartDate')
 
   const { data, isLoading } = useQuery({
-    queryKey: ['admin', 'movies', currentPage, keyword],
-    queryFn: () => adminApi.getMovies({ page: currentPage, size: pageSize, keyword: keyword || undefined }).then(r => {
+    queryKey: ['admin', 'movies', currentPage, searchKeyword],
+    queryFn: () => adminApi.getMovies({ page: currentPage, size: pageSize, keyword: searchKeyword || undefined }).then(r => {
       setTotalPages(r.data?.totalPages || 0)
       return r.data
     }),
@@ -117,7 +126,7 @@ export default function AdminMovies() {
         <input
           type="text"
           value={keyword}
-          onChange={(e) => { setKeyword(e.target.value); setCurrentPage(0) }}
+          onChange={(e) => setKeyword(e.target.value)}
           placeholder="Tìm kiếm theo tên phim..."
           className="input-field pl-9 w-full"
         />
