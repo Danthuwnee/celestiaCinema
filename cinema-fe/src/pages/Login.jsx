@@ -35,8 +35,8 @@ export default function Login() {
     setServerError('')
     setLoading(true)
     try {
-      await login(email, password)
-      const redirect = searchParams.get('redirect') || '/'
+      const data = await login(email, password)
+      const redirect = searchParams.get('redirect') || (data?.role === 'ADMIN' ? '/admin' : '/')
       navigate(redirect)
     } catch (err) {
       setServerError(err.response?.data?.error || 'Email hoặc mật khẩu không đúng')
