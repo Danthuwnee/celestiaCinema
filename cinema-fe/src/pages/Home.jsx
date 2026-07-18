@@ -41,7 +41,7 @@ export default function Home() {
   }, [])
 
   useEffect(() => {
-    movieApi.getNowShowing({ page: 0, size: 10 })
+    movieApi.getHeroMovies({ page: 0, size: 10 })
       .then(r => setHeroMovies(r.data?.content || []))
       .catch(() => {})
   }, [])

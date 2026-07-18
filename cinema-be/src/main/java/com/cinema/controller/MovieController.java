@@ -45,6 +45,11 @@ public class MovieController {
         return ResponseEntity.ok(movieService.getNowShowing(pageable));
     }
 
+    @GetMapping("/hero")
+    public ResponseEntity<Page<MovieResponse>> getHeroMovies(Pageable pageable) {
+        return ResponseEntity.ok(movieService.getNowShowing(pageable));
+    }
+
     @GetMapping("/coming-soon")
     public ResponseEntity<Page<MovieResponse>> getComingSoon(Pageable pageable) {
         return ResponseEntity.ok(movieService.getComingSoon(pageable));
