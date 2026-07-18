@@ -68,7 +68,6 @@ public class AdminComboController {
                 .description(c.getDescription())
                 .price(c.getPrice())
                 .imageUrl(c.getImageUrl())
-                .status(c.getStatus().name())
                 .build();
     }
 

@@ -31,7 +31,6 @@ public class ComboController {
                         .description(c.getDescription())
                         .price(c.getPrice())
                         .imageUrl(c.getImageUrl())
-                        .status(c.getStatus().name())
                         .build())
                 .toList();
         return ResponseEntity.ok(dtos);

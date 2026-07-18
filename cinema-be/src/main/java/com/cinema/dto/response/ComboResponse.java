@@ -19,5 +19,4 @@ public class ComboResponse {
     private String description;
     private BigDecimal price;
     private String imageUrl;
-    private String status;
 }
