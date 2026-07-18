@@ -241,7 +241,7 @@ export default function Home() {
           <>
 
             {/* Date selector */}
-            <div className="flex items-center gap-1.5 mb-1">
+            <div className="flex items-center gap-1.5 mb-1 overflow-x-auto no-scrollbar">
               <button
                 onClick={() => setDateStartIndex(prev => Math.max(0, prev - 7))}
                 disabled={dateStartIndex === 0}
@@ -254,14 +254,14 @@ export default function Home() {
                 <button
                   key={d.value}
                   onClick={() => setSelectedDate(d.value)}
-                  className={`px-2 py-3 min-w-[85px] flex-1 rounded-xl text-sm font-medium transition-all text-center leading-tight ${
+                  className={`px-1 md:px-2 py-3 flex-1 rounded-xl text-sm font-medium transition-all text-center leading-tight ${
                     selectedDate === d.value
                       ? 'bg-button-glow text-white shadow-lg shadow-galaxy-purple/20'
                       : 'bg-white/5 text-text-secondary hover:text-white'
                   }`}
                 >
                   <span className="block text-xs">{d.dayLabel}</span>
-                  <span className="block text-lg font-bold">{d.dayNumber}</span>
+                  <span className="block text-base md:text-lg font-bold">{d.dayNumber}</span>
                 </button>
               ))}
 
