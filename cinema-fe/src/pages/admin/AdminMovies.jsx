@@ -4,7 +4,7 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { useQuery, useQueryClient, keepPreviousData } from '@tanstack/react-query'
 import { motion } from 'framer-motion'
-import { Plus, Pencil, Trash2, Film, ChevronLeft, ChevronRight, Search } from 'lucide-react'
+import { Plus, Pencil, Film, ChevronLeft, ChevronRight, Search } from 'lucide-react'
 import movieApi from '../../api/movieApi'
 import adminApi from '../../api/adminApi'
 import Button from '../../components/ui/Button'
@@ -96,16 +96,6 @@ export default function AdminMovies() {
     })
     setEditingMovie(movie)
     setShowForm(true)
-  }
-
-  const handleDelete = async (id) => {
-    if (!window.confirm('Xóa phim này?')) return
-    try {
-      await adminApi.deleteMovie(id)
-      queryClient.invalidateQueries({ queryKey: ['admin', 'movies'] })
-    } catch (err) {
-      alert(err.response?.data?.error || err.response?.data || 'Không thể xóa phim')
-    }
   }
 
   const handleStatusToggle = async (movie) => {
@@ -257,7 +247,6 @@ export default function AdminMovies() {
                 </td>
                 <td className="p-4 text-right flex items-center justify-end gap-2">
                   <button onClick={() => handleEdit(m)} className="text-text-muted hover:text-white transition-colors"><Pencil size={16} /></button>
-                  <button onClick={() => handleDelete(m.movieId || m.id)} className="text-red-400 hover:text-red-300 transition-colors"><Trash2 size={16} /></button>
                 </td>
               </motion.tr>
             ))}
