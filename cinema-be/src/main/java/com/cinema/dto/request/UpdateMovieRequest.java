@@ -1,6 +1,8 @@
 package com.cinema.dto.request;
 
 import java.time.LocalDate;
+import java.util.List;
+import java.util.UUID;
 
 import com.cinema.enums.AgeRating;
 
@@ -27,4 +29,6 @@ public class UpdateMovieRequest {
     private String actors;
     private LocalDate showingStartDate;
     private LocalDate showingEndDate;
+
+    private List<UUID> genreIds;
 }

@@ -5,6 +5,7 @@ import { z } from 'zod'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { motion } from 'framer-motion'
 import { Plus, Pencil, Trash2, Film, ChevronLeft, ChevronRight } from 'lucide-react'
+import movieApi from '../../api/movieApi'
 import adminApi from '../../api/adminApi'
 import Button from '../../components/ui/Button'
 import Modal from '../../components/ui/Modal'
@@ -31,14 +32,15 @@ export default function AdminMovies() {
     director: z.string().optional(),
     actors: z.string().optional(),
     description: z.string().optional(),
+    genreIds: z.array(z.string()).min(1, 'Chọn ít nhất 1 thể loại'),
   }).refine((data) => {
     if (!data.showingEndDate || !data.showingStartDate) return true
     return new Date(data.showingEndDate) >= new Date(data.showingStartDate)
   }, { message: 'Ngày kết thúc phải sau ngày khởi chiếu', path: ['showingEndDate'] })
 
-  const defaultMovieValues = { title: '', description: '', duration: 120, language: 'Tiếng Việt', ageRating: 'T13', showingStartDate: '', showingEndDate: '', trailerUrl: '', posterUrl: '', director: '', actors: '' }
+  const defaultMovieValues = { title: '', description: '', duration: 120, language: 'Tiếng Việt', ageRating: 'T13', showingStartDate: '', showingEndDate: '', trailerUrl: '', posterUrl: '', director: '', actors: '', genreIds: [] }
 
-  const { register, handleSubmit: rhfHandleSubmit, formState: { errors, isValid }, watch, reset } = useForm({
+  const { register, handleSubmit: rhfHandleSubmit, formState: { errors, isValid }, watch, reset, setValue } = useForm({
     resolver: zodResolver(movieSchema),
     defaultValues: defaultMovieValues,
     mode: 'onChange',
@@ -53,6 +55,11 @@ export default function AdminMovies() {
       setTotalPages(r.data?.totalPages || 0)
       return r.data
     }),
+  })
+
+  const { data: genreList } = useQuery({
+    queryKey: ['genres'],
+    queryFn: () => movieApi.getGenres().then(r => r.data),
   })
 
   const movies = data?.content || data || []
@@ -82,6 +89,7 @@ export default function AdminMovies() {
       posterUrl: movie.posterUrl || '',
       director: movie.director || '',
       actors: movie.actors || '',
+      genreIds: movie.genres?.map(g => g.genreId || g.id) || [],
     })
     setEditingMovie(movie)
     setShowForm(true)
@@ -142,6 +150,36 @@ export default function AdminMovies() {
           <div>
             <label className="text-sm text-text-secondary">Mô tả</label>
             <textarea {...register('description')} className="input-field mt-1" rows={3} />
+          </div>
+          <div>
+            <label className="text-sm text-text-secondary">Thể loại</label>
+            <div className="flex flex-wrap gap-2 mt-1">
+              {genreList?.map(genre => {
+                const selected = watch('genreIds') || []
+                const isSelected = selected.includes(genre.genreId || genre.id)
+                return (
+                  <button
+                    key={genre.genreId || genre.id}
+                    type="button"
+                    onClick={() => {
+                      const current = watch('genreIds') || []
+                      const updated = isSelected
+                        ? current.filter(id => id !== (genre.genreId || genre.id))
+                        : [...current, genre.genreId || genre.id]
+                      setValue('genreIds', updated, { shouldValidate: true })
+                    }}
+                    className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all ${
+                      isSelected
+                        ? 'bg-galaxy-cyan text-space-dark'
+                        : 'bg-white/10 text-text-muted hover:bg-white/20'
+                    }`}
+                  >
+                    {genre.name}
+                  </button>
+                )
+              })}
+            </div>
+            {errors.genreIds && <p className="text-red-400 text-xs mt-1">{errors.genreIds.message}</p>}
           </div>
           <div>
             <label className="text-sm text-text-secondary">Phân loại</label>

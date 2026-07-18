@@ -1,5 +1,7 @@
 package com.cinema.controller.admin;
 
+import java.util.HashSet;
+import java.util.List;
 import java.util.UUID;
 
 import org.springframework.data.domain.Page;
@@ -17,10 +19,12 @@ import org.springframework.web.bind.annotation.RestController;
 import com.cinema.dto.request.CreateMovieRequest;
 import com.cinema.dto.request.UpdateMovieRequest;
 import com.cinema.dto.response.MovieResponse;
+import com.cinema.entity.Genre;
 import com.cinema.entity.Movie;
 import com.cinema.enums.EntityStatus;
 import com.cinema.exception.BadRequestException;
 import com.cinema.exception.ResourceNotFoundException;
+import com.cinema.repository.GenreRepository;
 import com.cinema.repository.MovieRepository;
 import com.cinema.service.MovieService;
 
@@ -34,6 +38,7 @@ public class AdminMovieController {
 
     private final MovieRepository movieRepository;
     private final MovieService movieService;
+    private final GenreRepository genreRepository;
 
     @GetMapping
     public ResponseEntity<Page<MovieResponse>> getAllMovies(Pageable pageable) {
@@ -66,6 +71,10 @@ public class AdminMovieController {
                 .showingEndDate(request.getShowingEndDate())
                 .status(EntityStatus.ACTIVE)
                 .build();
+        if (request.getGenreIds() != null && !request.getGenreIds().isEmpty()) {
+            List<Genre> genres = genreRepository.findAllById(request.getGenreIds());
+            movie.setGenres(new HashSet<>(genres));
+        }
         return ResponseEntity.ok(movieRepository.save(movie));
     }
 
@@ -89,6 +98,10 @@ public class AdminMovieController {
                 throw new BadRequestException("Ngày kết thúc phải sau ngày khởi chiếu");
             }
             existing.setShowingEndDate(request.getShowingEndDate());
+        }
+        if (request.getGenreIds() != null) {
+            List<Genre> genres = genreRepository.findAllById(request.getGenreIds());
+            existing.setGenres(new HashSet<>(genres));
         }
         return ResponseEntity.ok(movieRepository.save(existing));
     }
