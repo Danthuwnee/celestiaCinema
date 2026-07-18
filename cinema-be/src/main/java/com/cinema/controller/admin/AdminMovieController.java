@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.cinema.dto.request.CreateMovieRequest;
@@ -41,7 +42,12 @@ public class AdminMovieController {
     private final GenreRepository genreRepository;
 
     @GetMapping
-    public ResponseEntity<Page<MovieResponse>> getAllMovies(Pageable pageable) {
+    public ResponseEntity<Page<MovieResponse>> getAllMovies(
+            @RequestParam(required = false) String keyword,
+            Pageable pageable) {
+        if (keyword != null && !keyword.trim().isEmpty()) {
+            return ResponseEntity.ok(movieService.searchMoviesAdmin(keyword, pageable));
+        }
         return ResponseEntity.ok(movieService.getMovies(null, pageable));
     }
 

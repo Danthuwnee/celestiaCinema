@@ -52,10 +52,19 @@ public class AdminShowtimeController {
 
     @GetMapping
     @Transactional(readOnly = true)
-    public ResponseEntity<?> getAllShowtimes(Pageable pageable) {
+    public ResponseEntity<?> getAllShowtimes(
+            @RequestParam(required = false) String movieTitle,
+            Pageable pageable) {
         LocalDateTime today = LocalDateTime.now().withHour(0).withMinute(0).withSecond(0).withNano(0);
-        Page<ShowtimeResponse> response = showtimeRepository.findByStartTimeGreaterThanEqualAndStatusNot(today, EntityStatus.CANCELLED, pageable)
-            .map(this::toResponse);
+        Page<ShowtimeResponse> response;
+        if (movieTitle != null && !movieTitle.trim().isEmpty()) {
+            response = showtimeRepository.findByStartTimeGreaterThanEqualAndStatusNotAndMovieTitleContaining(
+                    today, EntityStatus.CANCELLED, movieTitle, pageable)
+                .map(this::toResponse);
+        } else {
+            response = showtimeRepository.findByStartTimeGreaterThanEqualAndStatusNot(today, EntityStatus.CANCELLED, pageable)
+                .map(this::toResponse);
+        }
         return ResponseEntity.ok(response);
     }
 

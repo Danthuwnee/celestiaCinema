@@ -4,7 +4,7 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { motion } from 'framer-motion'
-import { Plus, Pencil, Trash2, Film, ChevronLeft, ChevronRight } from 'lucide-react'
+import { Plus, Pencil, Trash2, Film, ChevronLeft, ChevronRight, Search } from 'lucide-react'
 import movieApi from '../../api/movieApi'
 import adminApi from '../../api/adminApi'
 import Button from '../../components/ui/Button'
@@ -17,6 +17,7 @@ export default function AdminMovies() {
   const [editingMovie, setEditingMovie] = useState(null)
   const [currentPage, setCurrentPage] = useState(0)
   const [totalPages, setTotalPages] = useState(0)
+  const [keyword, setKeyword] = useState('')
   const pageSize = 12
   const today = new Date().toISOString().split('T')[0]
 
@@ -50,11 +51,12 @@ export default function AdminMovies() {
   const showingStartDate = watch('showingStartDate')
 
   const { data, isLoading } = useQuery({
-    queryKey: ['admin', 'movies', currentPage],
-    queryFn: () => adminApi.getMovies({ page: currentPage, size: pageSize }).then(r => {
+    queryKey: ['admin', 'movies', currentPage, keyword],
+    queryFn: () => adminApi.getMovies({ page: currentPage, size: pageSize, keyword: keyword || undefined }).then(r => {
       setTotalPages(r.data?.totalPages || 0)
       return r.data
     }),
+    keepPreviousData: true,
   })
 
   const { data: genreList } = useQuery({
@@ -108,6 +110,17 @@ export default function AdminMovies() {
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-2xl font-bold flex items-center gap-2"><Film size={24} className="text-galaxy-cyan" /> Quản lý Phim</h1>
         <Button onClick={() => { reset(defaultMovieValues); setEditingMovie(null); setShowForm(true) }} className="flex items-center gap-2"><Plus size={16} /> Thêm phim</Button>
+      </div>
+
+      <div className="relative mb-4">
+        <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted" />
+        <input
+          type="text"
+          value={keyword}
+          onChange={(e) => { setKeyword(e.target.value); setCurrentPage(0) }}
+          placeholder="Tìm kiếm theo tên phim..."
+          className="input-field pl-9 w-full"
+        />
       </div>
 
       <Modal isOpen={showForm} onClose={() => { setShowForm(false); setEditingMovie(null); reset(defaultMovieValues) }} title={editingMovie ? 'Sửa phim' : 'Thêm phim'}>

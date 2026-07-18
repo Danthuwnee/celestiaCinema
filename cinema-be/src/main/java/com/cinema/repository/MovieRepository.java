@@ -29,4 +29,6 @@ public interface MovieRepository extends JpaRepository<Movie, UUID> {
 
     @Query("SELECT m FROM Movie m JOIN m.genres g WHERE g.genreId IN :genreIds AND m.status IN :statuses GROUP BY m")
     Page<Movie> filterByGenres(@Param("genreIds") List<UUID> genreIds, @Param("statuses") List<EntityStatus> statuses, Pageable pageable);
+
+    Page<Movie> findByTitleContainingIgnoreCase(String title, Pageable pageable);
 }

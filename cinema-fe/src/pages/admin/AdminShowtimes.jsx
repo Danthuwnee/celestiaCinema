@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { motion } from 'framer-motion'
-import { Clock, XCircle, Plus, ChevronLeft, ChevronRight, Trash2 } from 'lucide-react'
+import { Clock, XCircle, Plus, ChevronLeft, ChevronRight, Trash2, Search } from 'lucide-react'
 import adminApi from '../../api/adminApi'
 import Button from '../../components/ui/Button'
 import Modal from '../../components/ui/Modal'
@@ -12,6 +12,7 @@ export default function AdminShowtimes() {
   const [showForm, setShowForm] = useState(false)
   const [currentPage, setCurrentPage] = useState(0)
   const [totalPages, setTotalPages] = useState(0)
+  const [keyword, setKeyword] = useState('')
   const pageSize = 12
   const [form, setForm] = useState({ movieId: '', roomId: '', date: '', basePrice: 75000 })
   const [selectedIds, setSelectedIds] = useState(new Set())
@@ -43,11 +44,12 @@ export default function AdminShowtimes() {
   }, [form.movieId, form.roomId, form.date])
 
   const { data, isLoading } = useQuery({
-    queryKey: ['admin', 'showtimes', currentPage],
-    queryFn: () => adminApi.getShowtimes({ page: currentPage, size: pageSize }).then(r => {
+    queryKey: ['admin', 'showtimes', currentPage, keyword],
+    queryFn: () => adminApi.getShowtimes({ page: currentPage, size: pageSize, movieTitle: keyword || undefined }).then(r => {
       setTotalPages(r.data?.totalPages || 0)
       return r.data
     }),
+    keepPreviousData: true,
   })
 
   const { data: moviesData } = useQuery({
@@ -153,6 +155,17 @@ export default function AdminShowtimes() {
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-2xl font-bold flex items-center gap-2"><Clock size={24} className="text-galaxy-cyan" /> Quản lý Suất chiếu</h1>
         <Button onClick={() => setShowForm(!showForm)} className="flex items-center gap-2"><Plus size={16} /> Thêm suất chiếu</Button>
+      </div>
+
+      <div className="relative mb-4">
+        <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted" />
+        <input
+          type="text"
+          value={keyword}
+          onChange={(e) => { setKeyword(e.target.value); setCurrentPage(0) }}
+          placeholder="Tìm kiếm theo tên phim..."
+          className="input-field pl-9 w-full"
+        />
       </div>
 
       <Modal isOpen={showForm} onClose={() => { setShowForm(false); setSlots([]); setSelectedTimes([]) }} title="Thêm suất chiếu" className="max-w-xl">

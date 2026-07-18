@@ -135,6 +135,11 @@ public class MovieService {
         return true;
     }
 
+    public Page<MovieResponse> searchMoviesAdmin(String keyword, Pageable pageable) {
+        return movieRepository.findByTitleContainingIgnoreCase(keyword, pageable)
+                .map(this::toMovieResponse);
+    }
+
     public Page<MovieResponse> filterByGenres(List<UUID> genreIds, Pageable pageable) {
         List<EntityStatus> statuses = List.of(EntityStatus.ACTIVE, EntityStatus.COMING_SOON);
         return movieRepository.filterByGenres(genreIds, statuses, pageable)
