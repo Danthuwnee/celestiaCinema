@@ -23,7 +23,7 @@ public class CouponController {
 
     private final CouponService couponService;
 
-    @GetMapping("/active")
+    @GetMapping("/active-coupons")
     public ResponseEntity<List<CouponResponse>> getActiveCoupons() {
         return ResponseEntity.ok(couponService.getActiveCoupons());
     }
