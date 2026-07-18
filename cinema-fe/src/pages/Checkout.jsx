@@ -33,7 +33,11 @@ export default function Checkout() {
       navigate('/', { replace: true })
     }
   }, [user, navigate])
-  const [couponCode, setCouponCode] = useState('')
+  const [couponCode, setCouponCode] = useState(() => {
+    const saved = sessionStorage.getItem('preselectedCoupon')
+    if (saved) sessionStorage.removeItem('preselectedCoupon')
+    return saved || ''
+  })
   const [comboQtys, setComboQtys] = useState({})
   const [step, setStep] = useState('review')
   const [bookingId, setBookingId] = useState(null)
@@ -51,6 +55,15 @@ export default function Checkout() {
 
   const [checkingCoupon, setCheckingCoupon] = useState(false)
   const [couponResult, setCouponResult] = useState(null)
+  const autoApplied = useRef(false)
+
+  useEffect(() => {
+    if (couponCode && combos && !autoApplied.current) {
+      autoApplied.current = true
+      handleCheckCoupon()
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [couponCode, combos])
 
   const handleCheckCoupon = async () => {
     if (!couponCode) return

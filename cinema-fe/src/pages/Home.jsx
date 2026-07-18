@@ -378,6 +378,7 @@ export default function Home() {
                           )}
                           <Link
                             to="/?tab=schedule"
+                            onClick={() => sessionStorage.setItem('preselectedCoupon', cp.code)}
                             className="inline-block mt-2 text-[10px] font-medium text-galaxy-cyan hover:underline"
                           >
                             Đặt ngay →
