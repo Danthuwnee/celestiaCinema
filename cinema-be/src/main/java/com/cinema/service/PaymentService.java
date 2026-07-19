@@ -27,10 +27,7 @@ import com.cinema.repository.BookingRepository;
 import com.cinema.repository.BookingSeatRepository;
 import com.cinema.repository.PaymentRepository;
 import com.cinema.security.UserPrincipal;
-import com.cinema.zalopay.ZaloPayService;
 
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
 
 import lombok.RequiredArgsConstructor;
 
@@ -47,8 +44,6 @@ public class PaymentService {
     private final BookingSeatRepository bookingSeatRepository;
     private final BookingComboRepository bookingComboRepository;
     private final TaskScheduler taskScheduler;
-    private final ZaloPayService zaloPayService;
-    private final ObjectMapper objectMapper;
 
     private static final long SIMULATE_DELAY_MS = 15_000;
 
@@ -105,85 +100,6 @@ public class PaymentService {
 
         Booking booking = payment.getBooking();
         booking.setBookingStatus(BookingStatus.PAID);
-    }
-
-    @Transactional
-    public Map<String, Object> initiateZaloPayPayment(UUID bookingId, UserPrincipal principal) throws Exception {
-        Booking booking = bookingRepository.findById(bookingId)
-                .orElseThrow(() -> new ResourceNotFoundException("Booking not found"));
-
-        UUID userId = UUID.fromString(principal.getUserId());
-        if (!booking.getUser().getUserId().equals(userId)) {
-            throw new BadRequestException("Booking does not belong to this user");
-        }
-        if (booking.getBookingStatus() != BookingStatus.PENDING) {
-            throw new BadRequestException("Booking is not in PENDING status");
-        }
-
-        String appUserId = principal.getUserId();
-        long amount = booking.getTotalAmount().longValue();
-        if (amount < 10000) {
-            throw new BadRequestException("Số tiền thanh toán tối thiểu là 10,000₫");
-        }
-
-        Map<String, Object> embedDataMap = new HashMap<>();
-        embedDataMap.put("booking_id", bookingId.toString());
-        embedDataMap.put("redirecturl", "https://celestiacinema-3.onrender.com/booking/success?bookingId=" + bookingId.toString());
-
-        String embedData = objectMapper.writeValueAsString(embedDataMap);
-
-        String description = "Thanh toan ve xem phim";
-
-        Map<String, Object> zpResult = zaloPayService.createOrder(appUserId, amount, description, embedData);
-        String appTransId = (String) zpResult.get("app_trans_id");
-        String orderUrl = (String) zpResult.get("order_url");
-
-        String returnCode = String.valueOf(zpResult.get("return_code"));
-        if (!"1".equals(returnCode)) {
-            throw new RuntimeException("ZaloPay create order failed (code=" + returnCode + "): " + zpResult.get("return_message"));
-        }
-
-        Payment payment = Payment.builder()
-                .booking(booking)
-                .paymentMethod("ZALOPAY")
-                .paymentStatus(PaymentStatus.PENDING)
-                .transactionCode(appTransId)
-                .build();
-        paymentRepository.save(payment);
-
-        Map<String, Object> result = new HashMap<>();
-        result.put("orderUrl", orderUrl);
-        result.put("appTransId", appTransId);
-        result.put("bookingId", bookingId.toString());
-        return result;
-    }
-
-    @Transactional
-    public void handleZaloPayIpn(Map<String, String> ipnData) throws Exception {
-        if (!zaloPayService.verifyCallback(ipnData)) {
-            throw new BadRequestException("Invalid MAC");
-        }
-
-        String dataJson = ipnData.get("data");
-        Map<String, Object> data = objectMapper.readValue(dataJson, new TypeReference<Map<String, Object>>() {});
-
-        String appTransId = (String) data.get("app_trans_id");
-        String zpTransId = String.valueOf(data.get("zp_trans_id"));
-        int returnCode = (int) data.get("return_code");
-
-        Payment payment = paymentRepository.findByTransactionCode(appTransId)
-                .orElseThrow(() -> new ResourceNotFoundException("Payment not found for " + appTransId));
-
-        if (payment.getPaymentStatus() != PaymentStatus.PENDING) return;
-
-        if (returnCode == 1) {
-            payment.setPaymentStatus(PaymentStatus.SUCCESS);
-            payment.setPaidAt(LocalDateTime.now());
-            payment.setZpTransId(zpTransId);
-            payment.getBooking().setBookingStatus(BookingStatus.PAID);
-        } else {
-            payment.setPaymentStatus(PaymentStatus.FAILED);
-        }
     }
 
     public Map<String, Object> getPaymentStatus(UUID bookingId, UserPrincipal principal) {

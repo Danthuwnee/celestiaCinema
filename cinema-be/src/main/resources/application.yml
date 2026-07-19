@@ -92,12 +92,6 @@ app:
   cors:
     allowed-origins: ${APP_CORS_ALLOWED_ORIGINS:http://localhost:5173,http://localhost:3000,https://celestia-cinema.vercel.app}
 
-zalopay:
-  app-id: 2553
-  key1: PcY4iZIKFCIdgZvA6ueMcMHHUbRLYjPL
-  key2: kLtgPl8HHhfvMuDHPwKyjBsa2B6PRvYf
-  endpoint: https://sb-openapi.zalopay.vn/v2
-
 logging:
   level:
     com.cinema: DEBUG

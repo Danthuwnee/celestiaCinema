@@ -1,8 +1,8 @@
 import { useState, useEffect, useMemo, useCallback, useRef } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
-import { motion, AnimatePresence } from 'framer-motion'
-import { ChevronRight, Minus, Plus, Ticket, ShoppingBag, CreditCard, Clock, CheckCircle, X, AlertCircle, Smartphone } from 'lucide-react'
+import { motion } from 'framer-motion'
+import { ChevronRight, Minus, Plus, Ticket, ShoppingBag, CreditCard, Clock, CheckCircle, X, AlertCircle } from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext'
 import bookingApi from '../api/bookingApi'
 import paymentApi from '../api/paymentApi'
@@ -161,23 +161,6 @@ export default function Checkout() {
     }
   }
 
-  const handleZaloPayPayment = async () => {
-    if (!bookingId) return
-    setLoading(true)
-    setError('')
-    try {
-      const res = await paymentApi.createZaloPayPayment(bookingId)
-      const { orderUrl, appTransId } = res.data
-      setPolling(true)
-      startTimeRef.current = Date.now()
-      window.open(orderUrl, '_blank')
-    } catch (err) {
-      setError(err.response?.data?.error || 'Kết nối ZaloPay thất bại')
-    } finally {
-      setLoading(false)
-    }
-  }
-
   const handleBankPayment = async () => {
     if (!bookingId) return
     setLoading(true)
@@ -223,21 +206,6 @@ export default function Checkout() {
           )}
 
           <div className="space-y-3">
-            <div className="flex justify-between items-center p-4 rounded-xl border border-white/10">
-              <div className="flex items-center gap-3">
-                <div className="w-12 h-12 rounded-full bg-blue-500/20 flex items-center justify-center">
-                  <Smartphone size={24} className="text-blue-400" />
-                </div>
-                <div>
-                  <p className="font-semibold">ZaloPay</p>
-                  <p className="text-xs text-text-muted">Thanh toán qua ứng dụng ZaloPay</p>
-                </div>
-              </div>
-              <Button onClick={handleZaloPayPayment} disabled={loading || polling} className="shrink-0">
-                {loading ? 'Đang kết nối...' : 'Thanh toán ZaloPay'}
-              </Button>
-            </div>
-
             {!showBankQr && (
               <div className="flex justify-between items-center p-4 rounded-xl border border-white/10">
                 <div className="flex items-center gap-3">

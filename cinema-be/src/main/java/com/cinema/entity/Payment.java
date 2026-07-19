@@ -48,9 +48,6 @@ public class Payment {
     @Column(length = 255)
     private String transactionCode;
 
-    @Column(length = 50)
-    private String zpTransId;
-
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private PaymentStatus paymentStatus;
