@@ -153,7 +153,7 @@ export default function Register() {
               <Input label="Mật khẩu" type="password" placeholder="••••••••" value={form.password} onChange={(e) => update('password', e.target.value)} onBlur={() => handleBlur('password')} icon={Lock} error={errors.password} />
               <Input label="Xác nhận mật khẩu" type="password" placeholder="••••••••" value={form.confirmPassword} onChange={(e) => update('confirmPassword', e.target.value)} onBlur={() => handleBlur('confirmPassword')} error={errors.confirmPassword} />
 
-              <Button type="submit" disabled={loading || success || emailTaken || Object.keys(errors).length > 0} className="w-full flex items-center justify-center gap-2 text-base py-2">
+              <Button type="submit" disabled={loading || success || emailTaken || Object.values(errors).some(Boolean)} className="w-full flex items-center justify-center gap-2 text-base py-2">
                 <UserPlus size={18} />
                 {loading ? 'Đang đăng ký...' : 'Đăng ký'}
               </Button>
