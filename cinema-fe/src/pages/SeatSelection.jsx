@@ -1,12 +1,11 @@
-import { useState, useEffect, useRef, useCallback } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
-import { Client } from '@stomp/stompjs'
-import SockJS from 'sockjs-client'
 import { motion } from 'framer-motion'
 import { ChevronRight, Monitor, Ticket } from 'lucide-react'
 import bookingApi from '../api/bookingApi'
 import { useAuth } from '../contexts/AuthContext'
+import { useSocket } from '../contexts/SocketContext'
 import Loading from '../components/ui/Loading'
 import Button from '../components/ui/Button'
 
@@ -30,7 +29,7 @@ export default function SeatSelection() {
   const [selectedSeats, setSelectedSeats] = useState([])
   const [lockError, setLockError] = useState('')
   const [locking, setLocking] = useState(false)
-  const stompRef = useRef(null)
+  const { client } = useSocket()
 
   const { data: seats, isLoading } = useQuery({
     queryKey: ['seats', showtimeId],
@@ -39,20 +38,14 @@ export default function SeatSelection() {
   })
 
   useEffect(() => {
-    if (!showtimeId) return
-    const client = new Client({
-      webSocketFactory: () => new SockJS('/ws'),
-      reconnectDelay: 5000,
-      onConnect: () => {
-        client.subscribe(`/topic/seats/${showtimeId}`, () => {
-          queryClient.invalidateQueries({ queryKey: ['seats', showtimeId] })
-        })
-      },
+    if (!client || !showtimeId) return
+
+    const subscription = client.subscribe(`/topic/seats/${showtimeId}`, () => {
+      queryClient.invalidateQueries({ queryKey: ['seats', showtimeId] })
     })
-    client.activate()
-    stompRef.current = client
-    return () => client.deactivate()
-  }, [showtimeId, queryClient])
+
+    return () => subscription.unsubscribe()
+  }, [showtimeId, queryClient, client])
 
   const toggleSeat = useCallback((seat) => {
     if (!user) return navigate('/login')
