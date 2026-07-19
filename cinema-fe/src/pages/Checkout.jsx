@@ -58,6 +58,10 @@ export default function Checkout() {
   const autoApplied = useRef(false)
 
   useEffect(() => {
+    if (couponResult) setCouponResult(null)
+  }, [seatTotal, comboTotal])
+
+  useEffect(() => {
     if (couponCode && combos && !autoApplied.current) {
       autoApplied.current = true
       handleCheckCoupon()

@@ -30,11 +30,6 @@ export default function Layout() {
     navigate('/')
   }
 
-  const isActive = (path) => {
-    if (path === '/') return location.pathname === '/'
-    return location.pathname.startsWith(path)
-  }
-
   const isAuthPage = ['/login', '/register', '/forgot-password'].includes(location.pathname)
 
   return (
@@ -71,7 +66,7 @@ export default function Layout() {
                   key={link.path}
                   to={link.path}
                   className={`px-4 py-2 rounded-xl text-sm font-medium transition-all duration-300 ${
-                    location.pathname === link.path || location.search === link.path.split('?')[1]
+                    location.pathname === link.path || location.search === '?' + link.path.split('?')[1]
                       ? 'text-white bg-white/10'
                       : 'text-text-secondary hover:text-white hover:bg-white/5'
                   }`}

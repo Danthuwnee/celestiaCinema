@@ -7,6 +7,24 @@ import couponApi from '../api/couponApi'
 import Badge from '../components/ui/Badge'
 import Loading from '../components/ui/Loading'
 
+function PosterImage({ src, alt, title, className, wrapperClass, textSize }) {
+  const [failed, setFailed] = useState(false)
+  if (failed) {
+    return (
+      <div className={wrapperClass || 'w-full h-full flex items-center justify-center bg-white/5'}>
+        <span className="font-bold galaxy-text-gradient" style={textSize ? { fontSize: textSize } : {}}>
+          {(title || '?')[0]}
+        </span>
+      </div>
+    )
+  }
+  return (
+    <div className={wrapperClass || ''}>
+      <img src={src || '/placeholder.jpg'} alt={alt} className={className} onError={() => setFailed(true)} />
+    </div>
+  )
+}
+
 const tabs = [
   { key: 'now-showing', label: 'Phim đang chiếu' },
   { key: 'coming-soon', label: 'Phim sắp chiếu' },
@@ -294,14 +312,14 @@ export default function Home() {
                   <div key={item.movieId}>
                     <div className="glass-card p-4 flex gap-4">
                       <Link to={`/movies/${item.movieId}`} className="shrink-0">
-                        <div className="w-[130px] h-[185px] rounded-lg overflow-hidden bg-white/5">
-                          <img
-                            src={item.posterUrl || '/placeholder.jpg'}
-                            alt={item.title}
-                            className="w-full h-full object-cover"
-                            onError={(e) => { e.target.style.display = 'none'; e.target.parentElement.innerHTML = `<div class="w-full h-full flex items-center justify-center text-lg font-bold galaxy-text-gradient">${(item.title || '?')[0]}</div>` }}
-                          />
-                        </div>
+                        <PosterImage
+                          src={item.posterUrl}
+                          alt={item.title}
+                          title={item.title}
+                          className="w-full h-full object-cover"
+                          wrapperClass="w-[130px] h-[185px] rounded-lg overflow-hidden bg-white/5 flex items-center justify-center"
+                          textSize="1.125rem"
+                        />
                       </Link>
                       <div className="flex-1 min-w-0">
                         <Link to={`/movies/${item.movieId}`} className="hover:text-galaxy-cyan transition-colors">
@@ -445,11 +463,13 @@ export default function Home() {
                     >
                       <Link to={`/movies/${movie.movieId || movie.id}`}>
                         <div className="relative aspect-[3/4] overflow-hidden">
-                          <img
-                            src={movie.posterUrl || '/placeholder.jpg'}
+                          <PosterImage
+                            src={movie.posterUrl}
                             alt={movie.title}
+                            title={movie.title}
                             className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
-                            onError={(e) => { e.target.src = ''; e.target.parentElement.innerHTML = `<div class="w-full h-full flex items-center justify-center text-4xl font-bold galaxy-text-gradient">${(movie.title || '?')[0]}</div>` }}
+                            wrapperClass="w-full h-full"
+                            textSize="2.25rem"
                           />
                           <div className="absolute inset-0 bg-gradient-to-t from-space-dark/90 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end justify-center p-3 gap-2">
                             <span className="btn-primary text-xs py-1 px-3 flex items-center gap-1">

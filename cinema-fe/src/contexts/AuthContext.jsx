@@ -12,7 +12,12 @@ export function AuthProvider({ children }) {
     const token = localStorage.getItem('accessToken')
     const savedUser = localStorage.getItem('user')
     if (token && savedUser) {
-      setUser(JSON.parse(savedUser))
+      try {
+        setUser(JSON.parse(savedUser))
+      } catch {
+        localStorage.removeItem('accessToken')
+        localStorage.removeItem('user')
+      }
     }
     setLoading(false)
   }, [])
