@@ -59,7 +59,7 @@ export default function Checkout() {
 
   useEffect(() => {
     if (couponResult) setCouponResult(null)
-  }, [seatTotal, comboTotal])
+  }, [seats, combos, comboQtys])
 
   useEffect(() => {
     if (couponCode && combos && !autoApplied.current) {
